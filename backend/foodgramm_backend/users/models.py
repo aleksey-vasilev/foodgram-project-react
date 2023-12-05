@@ -12,7 +12,7 @@ class User(AbstractUser):
         'Логин',
         max_length=MAX_USERNAME_CHARACTERS,
         unique=True,
-        help_text=('Обязательное поле. Не более 150 символов. '
+        help_text=('Не более 150 символов. '
                    'Только буквы и цифры, символы @+-'),
         validators=(validator_username,),
         error_messages={
@@ -22,14 +22,13 @@ class User(AbstractUser):
     email = models.EmailField('E-mail: ', max_length=MAX_EMAIL_CHARACTERS,
                               unique=True)
     first_name = models.CharField('Имя: ',
-                                  max_length=MAX_USERNAME_CHARACTERS,
-                                  blank=True)
+                                  max_length=MAX_USERNAME_CHARACTERS)
     last_name = models.CharField('Фамилия: ',
-                                 max_length=MAX_USERNAME_CHARACTERS,
-                                 blank=True)
+                                 max_length=MAX_USERNAME_CHARACTERS)
     password = models.CharField('Пароль', max_length=MAX_PASSWORD_CHARACTERS)
 
     USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'password', 'first_name', 'last_name']
 
     class Meta:
         verbose_name = 'Пользователь'

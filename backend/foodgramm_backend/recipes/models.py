@@ -42,7 +42,7 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     """ Модель рецепта """
-    ingredients = models.ManyToManyField(Ingredient, through='IngredientRecipe', on_delete=models.CASCADE)
+    ingredients = models.ManyToManyField(Ingredient, through='IngredientRecipe')
     tags = models.ManyToManyField(Tag, through='TagRecipe')
     image = models.ImageField('Фото', upload_to='recipe/images/',
                               null=True, default=None)
@@ -50,10 +50,10 @@ class Recipe(models.Model):
     text = models.TextField('Описание', blank=True, null=True)
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
-        validators=(
+        validators=[
             MinValueValidator(MIN_COOKING_VALUE,
-                              message=COOKING_VALIDATION_MESSAGE)
-        )
+                              message=COOKING_VALIDATION_MESSAGE),
+        ]
     )
     author = models.ForeignKey(User, related_name='recipes', on_delete=models.CASCADE)
 
@@ -84,10 +84,10 @@ class IngredientRecipe(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     count = models.PositiveSmallIntegerField(
-        validators=(
+        validators=[
             MinValueValidator(MIN_INGREDIENT_VALUE,
-                              message=INGREDIENT_VALIDATION_MESSAGE)
-        )
+                              message=INGREDIENT_VALIDATION_MESSAGE),
+        ]
     )
 
     class Meta:
