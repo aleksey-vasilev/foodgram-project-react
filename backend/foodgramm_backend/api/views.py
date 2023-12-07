@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status
@@ -74,7 +76,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """ Вьюха для работы с рецептами"""
+    """ Вьюха для работы с рецептами """
 
     queryset = Recipe.objects.all()
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
@@ -144,7 +146,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
         elif request.method == 'DELETE':
             get_object_or_404(
-                ShopList, user=self.request.user,
+                ShopCart, user=self.request.user,
                 recipe=get_object_or_404(Recipe, pk=pk)).delete()
             return Response(
                 {'Рецепт удален из списка'},
@@ -159,7 +161,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         '''Скачать список покупок.'''
 
-        shopping_cart = ShopList.objects.filter(user=self.request.user)
+        shopping_cart = ShopCart.objects.filter(user=self.request.user)
         recipes = [item.recipe.id for item in shopping_cart]
         buy_list = IngredientRecipe.objects.filter(
             recipe__in=recipes

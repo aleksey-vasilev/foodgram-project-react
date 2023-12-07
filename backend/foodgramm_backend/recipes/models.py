@@ -82,7 +82,7 @@ class IngredientRecipe(models.Model):
     """ Промежуточная таблица между моделями Ingredient и Recipe """
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    count = models.PositiveSmallIntegerField(
+    amount = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(MIN_INGREDIENT_VALUE,
                               message=INGREDIENT_VALIDATION_MESSAGE),
@@ -96,7 +96,7 @@ class IngredientRecipe(models.Model):
                 name='unique_ingredients')]
 
     def __str__(self):
-        return f'{self.ingredient} {self.count}'
+        return f'{self.ingredient} {self.amount}'
 
 
 class Best(models.Model):

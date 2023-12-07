@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -65,16 +66,36 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
+class RecipeIngredientSerializer(serializers.ModelSerializer):
+    '''Добавление ингредиентов в рецепт.'''
+
+    id = serializers.IntegerField(write_only=True)
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurements_unit'
+    )
+
+    class Meta:
+        model = IngredientRecipe
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise ValidationError(
+                'Количество ингредиента должно быть больше 0'
+            )
+        return value
+
 class RecipeSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(many=True,
                                               queryset=Tag.objects.all())
-    #ingredients = AddIngredientRecipeSerializer(many=True)
+    ingredients = RecipeIngredientSerializer(many=True)
     #image = Base64ImageField(required=True, allow_null=False)
 
     class Meta:
         model = Recipe
         fields = (
-            #'ingredients',
+            'ingredients',
             'tags',
             #'image',
             'name',
@@ -112,29 +133,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         self.add_ingredients(instance, ingredients)
         instance.tags.set(tags)
         return super().update(instance, validated_data)
-
-class RecipeIngredientSerializer(serializers.ModelSerializer):
-    '''Добавление ингредиентов в рецепт.'''
-
-    id = serializers.IntegerField(write_only=True)
-    name = serializers.ReadOnlyField(source='ingredient.name')
-    measurement_unit = serializers.ReadOnlyField(
-        source='ingredient.measurements_unit'
-    )
-
-    class Meta:
-        model = IngredientRecipe
-        fields = ('id', 'name', 'measurement_unit', 'amount')
-
-    def validate_amount(self, value):
-        '''Проверяем, что количество ингредиента больше 0.'''
-
-        if value <= 0:
-            raise ValidationError(
-                'Количество ингредиента должно быть больше 0'
-            )
-        return value
-
 
 class RecipeGetSerializer(serializers.ModelSerializer):
     author = UserSerializer(
