@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+from django.db.models import F, Q
 from .validators import validator_username
 from .constants import (MAX_USERNAME_CHARACTERS, MAX_EMAIL_CHARACTERS,
                         MAX_PASSWORD_CHARACTERS)
@@ -41,16 +41,23 @@ class User(AbstractUser):
 
 
 class Follow(models.Model):
-    """ Подписка на пользователя """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='follower')
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='following')
 
     class Meta:
-        ordering = ('-id',)
         constraints = [
             models.UniqueConstraint(
-                fields=('user', 'author'),
-                name='unique_subscription')]
+                fields=['author', 'user'],
+                name='unique_user_following'
+            ),
+            models.CheckConstraint(
+                check=(
+                    ~Q(user=F('author'))),
+                name='prevent_self_follow',
+            )
+        ]
 
     def __str__(self):
-        return f'{self.user} {self.author}'
+        return self.user.username
