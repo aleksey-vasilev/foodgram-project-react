@@ -4,6 +4,7 @@ from django.db import IntegrityError
 from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from .mixins import UsernameVilidatorMixin
 from users.models import Follow
@@ -26,32 +27,53 @@ class UserSerializer(UsernameVilidatorMixin, serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
         if not user.is_anonymous:
-            return Follow.objects.filter(user=user, following=obj).exists()
+            return Follow.objects.filter(user=user, author=obj).exists()
         return False
 
 
-class FollowSerializer(serializers.Serializer):
-    def validate(self, data):
-        user = self.context.get('request').user
-        author = get_object_or_404(User, pk=self.context.get('view').kwargs.get('author_id'))
-        if user == author:
-            raise serializers.ValidationError(
-                'Нельзя подписаться на себя'
+class SubscriptionSerializer(UserSerializer):
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes', 'recipes_count')
+        read_only_fields = ('email', 'username', 'first_name', 'last_name',
+                            'is_subscribed', 'recipes', 'recipes_count')
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        recipes_limit = None
+        if request:
+            recipes_limit = request.query_params.get('recipes_limit')
+        recipes = obj.recipes.all()
+        if recipes_limit:
+            recipes = obj.recipes.all()[:int('recipes_limit')]
+        return RecipeSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=('user', 'author'),
+                message='Вы уже подписаны на этого пользователя'
             )
-        if Follow.objects.filter(user=user, author=author).exists():
+        ]
+
+    def validate(self, data):
+        if data['user'] == data['author']:
             raise serializers.ValidationError(
-                'Такая подписка уже есть'
+                'Нельзя подписаться себя'
             )
         return data
-
-    def create(self, validated_data):
-        user = self.context.get('request').user
-        author = get_object_or_404(User, pk=self.context.get('view').kwargs.get('author_id'))
-        Follow.objects.create(user=user, author=author)
-        serializer = UserSerializer(
-            author, context={'request': self.context.get('request')}
-        )
-        return serializer.data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -60,14 +82,16 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'color', 'slug')
         model = Tag
 
+
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
+
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    '''Добавление ингредиентов в рецепт.'''
+    ''' Добавление ингредиентов в рецепт '''
 
     id = serializers.IntegerField(write_only=True)
     name = serializers.ReadOnlyField(source='ingredient.name')
