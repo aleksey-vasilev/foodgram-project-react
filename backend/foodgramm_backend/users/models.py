@@ -42,22 +42,15 @@ class User(AbstractUser):
 
 class Follow(models.Model):
     """ Подписка на пользователя """
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='follower')
-    following = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='followings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
 
     class Meta:
+        ordering = ('-id',)
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'following'],
-                name='unique_user_following'
-            ),
-            models.CheckConstraint(
-                check=~models.Q(user=models.F('following')),
-                name='prevent_self_follow',
-            )
-        ]
+                fields=('user', 'author'),
+                name='unique_subscription')]
 
     def __str__(self):
-        return f'{self.user} {self.following}'
+        return f'{self.user} {self.author}'
