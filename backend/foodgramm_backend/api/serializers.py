@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from .mixins import UsernameVilidatorMixin
 from users.models import Follow
+from recipes.models import Tag
 
 User = get_user_model()
 
@@ -14,15 +15,14 @@ class UserSerializer(UsernameVilidatorMixin, serializers.ModelSerializer):
         model = User
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'password', 'is_subscribed')
-
-    def create(self, validated_data):
-        user, create = User.objects.get_or_create(**validated_data)
-        return user
+        extra_kwargs = {'password': {'write_only': True},
+                        'is_subscribed': {'read_only': True},
+                        }
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
         if not user.is_anonymous:
-            return Follow.objects.filter(user=user, author=obj).exists()
+            return Follow.objects.filter(user=user, following=obj).exists()
         return False
 
 
@@ -36,3 +36,9 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ('email', 'id', 'username', 'first_name', 'last_name')
+
+class TagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ('id', 'name', 'color', 'slug')
+        model = Tag

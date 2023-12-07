@@ -1,25 +1,31 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
-import djoser.views
-from rest_framework import (filters, permissions, status)
+from rest_framework import (permissions, status, viewsets)
 from rest_framework.decorators import action
+
 from rest_framework.response import Response
 
-from .serializers import (UserSerializer, FollowSerializer)
+from .serializers import (UserSerializer, FollowSerializer, TagSerializer)
+from .pagination import UsersPagination
 from users.models import Follow
+from recipes.models import Tag
 
 User = get_user_model()
 
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = (permissions.AllowAny,)
+    pagination_class = None
+    http_method_names = ('get',)
 
-class UserViewSet(djoser.views.UserViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """ Получение информации и изменение данных пользователей. """
-    lookup_field = 'username'
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('username',)
+    permission_classes = (permissions.AllowAny,)
+    pagination_class = UsersPagination
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     @action(methods=['get', 'patch'], detail=False,

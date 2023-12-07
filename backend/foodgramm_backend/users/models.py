@@ -27,6 +27,7 @@ class User(AbstractUser):
                                  max_length=MAX_USERNAME_CHARACTERS)
     password = models.CharField('Пароль', max_length=MAX_PASSWORD_CHARACTERS)
 
+    EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'password', 'first_name', 'last_name']
 

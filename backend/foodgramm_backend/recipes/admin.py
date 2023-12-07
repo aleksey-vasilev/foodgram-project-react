@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from .models import Recipe, Ingredient
+from .models import Recipe, Ingredient, Tag
 
 admin.site.empty_value_display = 'Не задано'
 
@@ -34,6 +34,11 @@ class IngredientAdmin(admin.ModelAdmin):
         'measurement_unit',
     )
 
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name',
+                    'color',
+                    'slug')
 
 admin.site.site_title = 'Администрирование Фудграмм'
 admin.site.site_header = 'Администрирование Фудграмм'
