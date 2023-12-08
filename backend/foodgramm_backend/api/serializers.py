@@ -42,12 +42,6 @@ class UserSerializer(UsernameVilidatorMixin, serializers.ModelSerializer):
         return False
 
 
-class RecipeLimitedSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-
-
 class SubscriptionSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -233,3 +227,8 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
         if user.is_authenticated:
             return user.shop_cart.filter(recipe=recipe).exists()
         return False
+
+class RecipeLimitedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')

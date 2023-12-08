@@ -9,8 +9,8 @@ from .views import (TagViewSet, UserSubscriptionViewSet,
 router = routers.SimpleRouter()
 router.register('tags', TagViewSet, basename='tags')
 router.register('ingredients', IngredientViewSet, basename='ingredients')
-#router.register('users/subscriptions', UserSubscriptionViewSet,
-#                basename='subscriptions')
+router.register('users/subscriptions', UserSubscriptionViewSet,
+                basename='subscriptions')
 router.register('recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
