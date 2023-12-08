@@ -35,10 +35,10 @@ class UserSubscriptionViewSet(mixins.ListModelMixin,
         return User.objects.filter(following__user=self.request.user)
 
 
-class UserSubscribeViewSet(APIView):
+class UserSubscribeAPIView(APIView):
     def post(self, request, author_id):
-        user = get_object_or_404(User, username=request.user)
         author = get_object_or_404(User, id=author_id)
+        user = self.request.user
         serializer = FollowSerializer(
             data={'user': user.id, 'author': author_id}
         )

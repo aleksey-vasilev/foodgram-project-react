@@ -36,9 +36,7 @@ class UserSerializer(UsernameVilidatorMixin, serializers.ModelSerializer):
                         'is_subscribed': {'read_only': True}}
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request'):
-        if not request:
-            return False
+        request = self.context.get('request')
         if not request.user.is_anonymous:
             return Follow.objects.filter(user=request.user, author=obj).exists()
         return False
@@ -61,7 +59,7 @@ class SubscriptionSerializer(UserSerializer):
         if request:
             recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit:
-            recipes = obj.recipes.all()[:int(recipes_limit)]
+            recipes = obj.recipes.all()[:int('recipes_limit')]
         else:
             recipes = obj.recipes.all()
         return RecipeRetriveSerializer(recipes, many=True).data
