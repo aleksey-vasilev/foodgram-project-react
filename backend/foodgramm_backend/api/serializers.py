@@ -1,16 +1,14 @@
 import base64
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .mixins import UsernameVilidatorMixin
-from users.models import Follow
+from .mixins import UsernameValidatorMixin, RecipeValidatorMixin
 from recipes.models import (Tag, Ingredient, Recipe,
                             IngredientRecipe, TagRecipe)
+from users.models import Follow
 
 User = get_user_model()
 
@@ -25,7 +23,7 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class UserSerializer(UsernameVilidatorMixin, serializers.ModelSerializer):
+class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -124,7 +122,7 @@ class IngredientGetSerializer(serializers.ModelSerializer):
         return obj.ingredient.name
 
 
-class RecipeModifySerializer(serializers.ModelSerializer):
+class RecipeModifySerializer(RecipeValidatorMixin, serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
     image = Base64ImageField()
@@ -147,6 +145,7 @@ class RecipeModifySerializer(serializers.ModelSerializer):
                                             recipe=recipe)
         return recipe
 
+
     def update(self, instance, validated_data):
         if 'ingredients' in validated_data:
             ingredients = validated_data.pop('ingredients')
@@ -167,39 +166,6 @@ class RecipeModifySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return RecipeRetriveSerializer(instance, context={
             'request': self.context.get('request')},).data
-
-'''
-    def validate(self, data):
-        ingredients = data['ingredients']
-        ingredient_list = []
-        for items in ingredients:
-            ingredient = get_object_or_404(Ingredient, id=items['id'])
-            if ingredient in ingredient_list:
-                raise serializers.ValidationError('Такой ингридиент уже есть')
-            ingredient_list.append(ingredient)
-        tags = data['tags']
-        if not tags:
-            raise serializers.ValidationError('Тег не указан')
-        return data
-
-    def validate_cooking_time(self, cooking_time):
-        if int(cooking_time) < 1:
-            raise serializers.ValidationError('Время приготовления'
-                                              ' меньше 1 минуты')
-        return cooking_time
-
-    def validate_ingredients(self, ingredients):
-        if not ingredients:
-            raise serializers.ValidationError('Игредиенты не указаны')
-        for ingredient in ingredients:
-            if int(ingredient.get('amount')) < 1:
-                raise serializers.ValidationError('Количество не может быть 0')
-        return ingredients
-
-    def to_representation(self, instance):
-        return RecipeGetSerializer(instance, context={
-            'request': self.context.get('request')}).data
-'''
 
 
 class RecipeRetriveSerializer(serializers.ModelSerializer):

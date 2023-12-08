@@ -1,19 +1,19 @@
 from django.contrib.auth import get_user_model
-from django.db.models.expressions import Exists, OuterRef, Value
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, status, mixins
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.decorators import action
 
+from .filters import IngredientFilter, RecipeFilter
+from .permissions import IsAuthorOrReadOnly
+from recipes.models import (Tag, Ingredient, Recipe,
+                            Best, ShopCart)
 from .serializers import (FollowSerializer, TagSerializer,
                           IngredientSerializer, RecipeRetriveSerializer,
                           RecipeModifySerializer, SubscriptionSerializer)
 from users.models import Follow
-from recipes.models import (Tag, Ingredient, Recipe,
-                            Best, ShopCart)
-from .filters import IngredientFilter, RecipeFilter
 
 User = get_user_model()
 
@@ -74,7 +74,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """ Рецепты """
     queryset = Recipe.objects.all()
     filterset_class = RecipeFilter
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthorOrReadOnly,)
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
