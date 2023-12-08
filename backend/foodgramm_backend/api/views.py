@@ -1,6 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
-from django.http import FileResponse
 from django.db.models.expressions import Exists, OuterRef, Value
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,12 +9,14 @@ from rest_framework.decorators import action
 
 from .serializers import (FollowSerializer, TagSerializer,
                           IngredientSerializer, RecipeGetSerializer,
-                          RecipePostSerializer, SubscriptionSerializer)
+                          RecipeModifySerializer, SubscriptionSerializer)
 from users.models import Follow
-from recipes.models import Tag, Ingredient, Recipe, Best, ShopCart, IngredientRecipe
+from recipes.models import (Tag, Ingredient, Recipe,
+                            Best, ShopCart)
 from .filters import IngredientFilter, RecipeFilter
 
 User = get_user_model()
+
 
 class TagViewSet(viewsets.ModelViewSet):
     """ Получение тегов """
@@ -28,7 +28,7 @@ class TagViewSet(viewsets.ModelViewSet):
 
 
 class UserSubscriptionViewSet(mixins.ListModelMixin,
-                               viewsets.GenericViewSet):
+                              viewsets.GenericViewSet):
     serializer_class = SubscriptionSerializer
 
     def get_queryset(self):
@@ -59,6 +59,7 @@ class UserSubscribeViewSet(APIView):
         return Response({'errors': 'Объект не найден'},
                         status=status.HTTP_404_NOT_FOUND)
 
+
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """ Получение списка ингридиентов """
     queryset = Ingredient.objects.all()
@@ -70,18 +71,19 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """Рецепты."""
-
+    """ Рецепты """
     queryset = Recipe.objects.all()
-    filterset_class = RecipeFilter
+    #filterset_class = RecipeFilter
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
             return RecipeGetSerializer
-        return RecipePostSerializer
+        return RecipeModifySerializer
 
     def get_queryset(self):
+        return Recipe.objects.all()
+        '''
         return Recipe.objects.annotate(
             is_favorited=Exists(
                 Best.objects.filter(
@@ -99,13 +101,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).select_related('author').prefetch_related(
             'tags', 'ingredients', 'recipe',
             'shopping_cart', 'favorite_recipe')
+        '''
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(
-        detail=False,
-        methods=['get'],
-        permission_classes=(permissions.IsAuthenticated,))
+    @action(detail=False, methods=['get'],
+            permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
         pass

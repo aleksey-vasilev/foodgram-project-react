@@ -41,8 +41,8 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     """ Модель рецепта """
-    ingredients = models.ManyToManyField(Ingredient, through='IngredientRecipe')
-    tags = models.ManyToManyField(Tag, through='TagRecipe')
+    ingredients = models.ManyToManyField(Ingredient, related_name='recipes', through='IngredientRecipe')
+    tags = models.ManyToManyField(Tag, related_name='recipes', through='TagRecipe')
     image = models.ImageField('Фото', upload_to='recipe/images/',
                               null=True, default=None)
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
@@ -80,9 +80,11 @@ class TagRecipe(models.Model):
 
 class IngredientRecipe(models.Model):
     """ Промежуточная таблица между моделями Ingredient и Recipe """
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    amount = models.PositiveSmallIntegerField(
+    ingredient = models.ForeignKey(Ingredient, related_name="ingredientrecipe",
+                                   on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name="ingredientrecipe",
+                               on_delete=models.CASCADE)
+    amount = models.IntegerField(
         validators=[
             MinValueValidator(MIN_INGREDIENT_VALUE,
                               message=INGREDIENT_VALIDATION_MESSAGE),
@@ -96,12 +98,13 @@ class IngredientRecipe(models.Model):
                 name='unique_ingredients')]
 
     def __str__(self):
-        return f'{self.ingredient} {self.amount}'
+        return f'{self.ingredient} {self.recipe}'
 
 
 class Best(models.Model):
     """ Избранные рецепты """
-    author = models.ForeignKey(User, related_name='best', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='best',
+                               on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
     class Meta:
@@ -117,7 +120,8 @@ class Best(models.Model):
 
 class ShopCart(models.Model):
     """ Корзина для покупок """
-    author = models.ForeignKey(User, related_name='shop_cart', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='shop_cart',
+                               on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
     class Meta:

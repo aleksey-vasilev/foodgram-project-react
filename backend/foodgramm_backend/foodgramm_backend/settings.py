@@ -9,9 +9,9 @@ load_dotenv(BASE_DIR.parent / '.env')
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'default')
 
-DEBUG = os.getenv('DEBUG', default=False) == 'True'
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split()
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split()
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -88,7 +88,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgramm_backend.wsgi.application'
 
-if os.getenv('USE_SQLITE', 'False') == 'True':
+if os.getenv('USE_SQLITE', 'True') == 'True':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

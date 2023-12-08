@@ -1,0 +1,1 @@
+USERS_ME_PATH = '/api/users/me/'

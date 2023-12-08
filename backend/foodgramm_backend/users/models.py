@@ -19,11 +19,11 @@ class User(AbstractUser):
             'unique': 'Пользователь с таким именем уже есть',
         }
     )
-    email = models.EmailField('E-mail: ', max_length=MAX_EMAIL_CHARACTERS,
+    email = models.EmailField('E-mail', max_length=MAX_EMAIL_CHARACTERS,
                               unique=True)
-    first_name = models.CharField('Имя: ',
+    first_name = models.CharField('Имя',
                                   max_length=MAX_USERNAME_CHARACTERS)
-    last_name = models.CharField('Фамилия: ',
+    last_name = models.CharField('Фамилия',
                                  max_length=MAX_USERNAME_CHARACTERS)
     password = models.CharField('Пароль', max_length=MAX_PASSWORD_CHARACTERS)
 
