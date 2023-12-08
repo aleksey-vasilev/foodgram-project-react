@@ -165,8 +165,9 @@ class RecipeModifySerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        return RecipeGetSerializer(instance, context={
+        return RecipeRetriveSerializer(instance, context={
             'request': self.context.get('request')},).data
+
 '''
     def validate(self, data):
         ingredients = data['ingredients']
@@ -201,15 +202,28 @@ class RecipeModifySerializer(serializers.ModelSerializer):
 '''
 
 
-class RecipeGetSerializer(serializers.ModelSerializer):
+class RecipeRetriveSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True,
                             default=serializers.CurrentUserDefault())
     ingredients = IngredientGetSerializer(many=True, source='ingredientrecipe')
-    is_favorited = serializers.BooleanField(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(read_only=True)
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+
 
     class Meta:
         model = Recipe
         fields = '__all__'
+
+    def get_is_favorited(self, recipe):
+        user =  self.context.get('request').get('user')
+        if user.is_authenticated(): 
+            return user.best.filter(recipe=recipe).exists()
+        return False
+
+    def get_is_in_shopping_cart(self, recipe):
+        user =  self.context.get('request').get('user')
+        if user.is_authenticated(): 
+            return user.shop_cart.filter(recipe=recipe).exists()
+        return False

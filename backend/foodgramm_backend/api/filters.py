@@ -5,6 +5,7 @@ from recipes.models import Ingredient, Recipe
 
 User = get_user_model()
 
+
 class IngredientFilter(filters.FilterSet):
     name = filters.CharFilter(
         field_name='name',
@@ -26,4 +27,4 @@ class RecipeFilter(filters.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ['is_favorited', 'is_in_shopping_cart']
+        fields = ('author', 'is_favorited', 'is_in_shopping_cart')

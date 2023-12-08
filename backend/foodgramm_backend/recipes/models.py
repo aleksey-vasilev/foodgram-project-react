@@ -103,15 +103,15 @@ class IngredientRecipe(models.Model):
 
 class Best(models.Model):
     """ Избранные рецепты """
-    author = models.ForeignKey(User, related_name='best',
-                               on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='best',
+                             on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
         constraints = [models.UniqueConstraint(
-            fields=['author', 'recipe'],
+            fields=['user', 'recipe'],
             name='unique_best')]
 
     def __str__(self):
@@ -120,15 +120,15 @@ class Best(models.Model):
 
 class ShopCart(models.Model):
     """ Корзина для покупок """
-    author = models.ForeignKey(User, related_name='shop_cart',
-                               on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='shop_cart',
+                             on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
         constraints = [models.UniqueConstraint(
-            fields=['author', 'recipe'],
+            fields=['user', 'recipe'],
             name='unique_shop_cart')]
 
     def __str__(self):
