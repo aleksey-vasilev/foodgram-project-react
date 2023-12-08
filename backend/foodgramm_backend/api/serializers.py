@@ -42,6 +42,12 @@ class UserSerializer(UsernameVilidatorMixin, serializers.ModelSerializer):
         return False
 
 
+class RecipeLimitedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class SubscriptionSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -59,10 +65,10 @@ class SubscriptionSerializer(UserSerializer):
         if request:
             recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit:
-            recipes = obj.recipes.all()[:int('recipes_limit')]
+            recipes = obj.recipes.all()[:int(recipes_limit)]
         else:
             recipes = obj.recipes.all()
-        return RecipeRetriveSerializer(recipes, many=True).data
+        return RecipeLimitedSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
