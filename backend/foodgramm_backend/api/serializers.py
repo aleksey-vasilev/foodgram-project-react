@@ -62,7 +62,7 @@ class SubscriptionSerializer(UserSerializer):
             recipes = obj.recipes.all()[:int(recipes_limit)]
         else:
             recipes = obj.recipes.all()
-        return RecipeGetSerializer(recipes, many=True).data
+        return RecipeRetriveSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
@@ -217,13 +217,13 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_is_favorited(self, recipe):
-        user =  self.context.get('request').get('user')
-        if user.is_authenticated(): 
+        user = self.context.get('request').user
+        if user.is_authenticated:
             return user.best.filter(recipe=recipe).exists()
         return False
 
     def get_is_in_shopping_cart(self, recipe):
-        user =  self.context.get('request').get('user')
-        if user.is_authenticated(): 
+        user = self.context.get('request').user
+        if user.is_authenticated:
             return user.shop_cart.filter(recipe=recipe).exists()
         return False

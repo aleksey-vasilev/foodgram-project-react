@@ -89,30 +89,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         pass
 
-    @action(detail=False, methods=['post', 'delete'],
+    @action(detail=True, methods=['post', 'delete'],
             permission_classes=[permissions.IsAuthenticated])
     def favorite(self, request, pk):
-        if request.method == 'POST'
+        if request.method == 'POST':
             if Best.objects.filter(user=request.user, recipe__id=pk).exists():
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response('Уже в избранном',
+                                status=status.HTTP_400_BAD_REQUEST)
             recipe = get_object_or_404(Recipe, id=pk)
             Best.objects.create(user=request.user, recipe=recipe)
             serializer = RecipeRetriveSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)  
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             Best.objects.filter(user=request.user, recipe__id=pk).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['post', 'delete'],
+    @action(detail=True, methods=['post', 'delete'],
             permission_classes=[permissions.IsAuthenticated])
     def shopping_cart(self, request, pk):
-        if request.method == 'POST'
-            if ShopCart.objects.filter(user=request.user, recipe__id=pk).exists():
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'POST':
+            if ShopCart.objects.filter(user=request.user,
+                                       recipe__id=pk).exists():
+                return Response('Уже в корзине!',
+                                status=status.HTTP_400_BAD_REQUEST)
             recipe = get_object_or_404(Recipe, id=pk)
             ShopCart.objects.create(user=request.user, recipe=recipe)
             serializer = RecipeRetriveSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)  
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             ShopCart.objects.filter(user=request.user, recipe__id=pk).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
