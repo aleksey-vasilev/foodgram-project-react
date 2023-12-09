@@ -194,6 +194,7 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
             return user.shop_cart.filter(recipe=recipe).exists()
         return False
 
+
 class RecipeLimitedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
