@@ -10,9 +10,9 @@ User = get_user_model()
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('id','username', 'email', 'first_name', 'last_name')
+    list_display = ('id', 'username', 'email', 'first_name', 'last_name', 'password')
     list_editable = ('email',)
-    list_filter = ('username',)
+    list_filter = ('username', 'email')
     search_fields = ('username', 'email')
 
 
