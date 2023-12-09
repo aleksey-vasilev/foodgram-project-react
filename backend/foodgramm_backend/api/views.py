@@ -70,8 +70,23 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """ Рецепты """
     queryset = Recipe.objects.all()
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrReadOnly,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
+            if is_in_shopping_cart:
+                breakpoint()
+                return user.shop_cart.all()
+            is_favorited = self.request.query_params.get('is_in_shopping_cart')
+            if is_favorited:
+                return user.best.all()
+            return user.recipes.all()
+        return Recipe.objects.all()
+
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:

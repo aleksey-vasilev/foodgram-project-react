@@ -103,9 +103,8 @@ class IngredientRecipe(models.Model):
 
 class Best(models.Model):
     """ Избранные рецепты """
-    user = models.ForeignKey(User, related_name='best',
-                             on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='best', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='in_favorites', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Избранный рецепт'
@@ -120,9 +119,8 @@ class Best(models.Model):
 
 class ShopCart(models.Model):
     """ Корзина для покупок """
-    user = models.ForeignKey(User, related_name='shop_cart',
-                             on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='shop_cart', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='in_shopping_cart', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Список покупок'
