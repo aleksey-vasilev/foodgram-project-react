@@ -1,6 +1,13 @@
+import io
+
+from django.http import FileResponse
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import red
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -103,7 +110,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
-        return Response(status=status.HTTP_200_OK)
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer)
+        PAGE_HEIGHT = p._pagesize[1]
+        p.saveState()
+        p.setStrokeColor(red)
+        p.setLineWidth(5)
+        p.line(66,72,66,PAGE_HEIGHT-72)
+        pdfmetrics.registerFont(TTFont('FreeSans', 'FreeSans.ttf'))
+        p.setFont('FreeSans', 24)
+        p.drawString(108, PAGE_HEIGHT-108, "СПИСОК ПОКУПОК")
+        p.setFont('FreeSans', 12)
+        p.restoreState()
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename="hello.pdf", status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[permissions.IsAuthenticated])
