@@ -9,7 +9,8 @@ from rest_framework.views import APIView
 from .constants import (SUCCESS_UNFOLLOW, FOLLOWING_NOT_FOUND,
                         RECIPE_NOT_FOUND, ALREADY_IN_BEST,
                         RECIPE_NOT_IN_BEST, SUCCESS_REMOVE_FROM_BEST,
-                        ALREADY_IN_CART, SUCCESS_REMOVE_FROM_CART)
+                        ALREADY_IN_CART, SUCCESS_REMOVE_FROM_CART,
+                        RECIPE_NOT_IN_CART)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, TagSerializer,
