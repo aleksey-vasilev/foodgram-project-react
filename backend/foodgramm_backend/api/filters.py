@@ -18,12 +18,7 @@ class IngredientFilter(filters.FilterSet):
 
 
 class RecipeFilter(filters.FilterSet):
-    is_in_shopping_cart = filters.BooleanFilter(
-        widget=filters.widgets.BooleanWidget())
-    is_favorited = filters.BooleanFilter(
-        widget=filters.widgets.BooleanWidget())
-    tags = filters.AllValuesMultipleFilter(
-        field_name='tags__slug')
+    tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
 
     class Meta:
         model = Recipe
