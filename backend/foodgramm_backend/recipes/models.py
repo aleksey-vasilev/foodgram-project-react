@@ -118,7 +118,7 @@ class Best(models.Model):
 
 
 class ShopCart(models.Model):
-    """ Корзина для покупок """
+    """ Корзина для списка покупок """
     user = models.ForeignKey(User, related_name='shop_cart', on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, related_name='in_shopping_cart', on_delete=models.CASCADE)
 

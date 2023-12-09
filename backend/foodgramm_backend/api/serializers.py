@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
+from .constants import (DULICATE_FOLLOW_ERROR, SELF_FOLLOW_ERROR)
 from .mixins import UsernameValidatorMixin, RecipeValidatorMixin
 from recipes.models import (Tag, Ingredient, Recipe,
                             IngredientRecipe, TagRecipe)
@@ -14,6 +15,7 @@ User = get_user_model()
 
 
 class Base64ImageField(serializers.ImageField):
+    """ Описание поля для кодорования изображения в Base64 """
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')  
@@ -24,6 +26,10 @@ class Base64ImageField(serializers.ImageField):
 
 
 class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
+    """
+    Сериализатор для кастомной модели пользователя.
+    Используется Djoser'ом для обработки стандартных эндпоинтов.
+    """
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -41,6 +47,7 @@ class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(UserSerializer):
+    """ Сериализатор для получения списка подписок пользователя """
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -67,38 +74,38 @@ class SubscriptionSerializer(UserSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
+    """ Сериализатор для обработки подписки пользователя на автора"""
     class Meta:
         model = Follow
         fields = '__all__'
         validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=('user', 'author'),
-                message='Вы уже подписаны на этого пользователя'
-            )
+            UniqueTogetherValidator(queryset=Follow.objects.all(),
+                                    fields=('user', 'author'),
+                                    message=DULICATE_FOLLOW_ERROR)
         ]
 
     def validate(self, data):
         if data['user'] == data['author']:
-            raise serializers.ValidationError('Нельзя подписаться на себя')
+            raise serializers.ValidationError(SELF_FOLLOW_ERROR)
         return data
 
 
 class TagSerializer(serializers.ModelSerializer):
-
+    """ Сериализатор для тегов """
     class Meta:
         fields = ('id', 'name', 'color', 'slug')
         model = Tag
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-
+    """ Сериализатор для списка ингредиентов """
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
 
 class IngredientModifySerializer(serializers.ModelSerializer):
+    """ Сериализатор для изменения ингредиентов """
     id = serializers.IntegerField(write_only=True)
     amount = serializers.IntegerField(write_only=True)
 
@@ -107,7 +114,8 @@ class IngredientModifySerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
 
-class IngredientGetSerializer(serializers.ModelSerializer):
+class IngredientRetriveSerializer(serializers.ModelSerializer):
+    """ Сериализатор для изменения ингредиентов """
     name = serializers.SerializerMethodField()
     measurement_unit = serializers.SerializerMethodField()
 
@@ -123,6 +131,7 @@ class IngredientGetSerializer(serializers.ModelSerializer):
 
 
 class RecipeModifySerializer(RecipeValidatorMixin, serializers.ModelSerializer):
+    """ Сериализатор для изменения рецептов """
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
     image = Base64ImageField()
@@ -144,7 +153,6 @@ class RecipeModifySerializer(RecipeValidatorMixin, serializers.ModelSerializer):
                                             amount=ingredient.get('amount'),
                                             recipe=recipe)
         return recipe
-
 
     def update(self, instance, validated_data):
         if 'ingredients' in validated_data:
@@ -169,14 +177,14 @@ class RecipeModifySerializer(RecipeValidatorMixin, serializers.ModelSerializer):
 
 
 class RecipeRetriveSerializer(serializers.ModelSerializer):
+    """ Сериализатор для чтения рецептов """
     image = Base64ImageField()
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True,
                             default=serializers.CurrentUserDefault())
-    ingredients = IngredientGetSerializer(many=True, source='ingredientrecipe')
+    ingredients = IngredientRetriveSerializer(many=True, source='ingredientrecipe')
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
-
 
     class Meta:
         model = Recipe
@@ -196,6 +204,7 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
 
 
 class RecipeLimitedSerializer(serializers.ModelSerializer):
+    """ Сериализатор для чтения рецептов находящихся в корзине и избранном """
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')

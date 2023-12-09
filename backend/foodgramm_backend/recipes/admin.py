@@ -8,16 +8,8 @@ admin.site.empty_value_display = 'Не задано'
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = (
-        'recipe_image',
-        'name',
-        'author',
-        'text',
-    )
-    list_editable = (
-        'name',
-        'text',
-    )
+    list_display = ('recipe_image', 'name', 'author', 'text',)
+    list_editable = ('name', 'text',)
     search_fields = ('name',)
     list_filter = ('cooking_time',)
 
@@ -34,11 +26,11 @@ class IngredientAdmin(admin.ModelAdmin):
         'measurement_unit',
     )
 
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name',
-                    'color',
-                    'slug')
+    list_display = ('name', 'color', 'slug')
+
 
 admin.site.site_title = 'Администрирование Фудграмм'
 admin.site.site_header = 'Администрирование Фудграмм'

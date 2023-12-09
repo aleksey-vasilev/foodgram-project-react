@@ -6,6 +6,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .constants import (SUCCESS_UNFOLLOW, FOLLOWING_NOT_FOUND,
+                        RECIPE_NOT_FOUND, ALREADY_IN_BEST,
+                        RECIPE_NOT_IN_BEST, SUCCESS_REMOVE_FROM_BEST,
+                        ALREADY_IN_CART, SUCCESS_REMOVE_FROM_CART)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, TagSerializer,
@@ -18,7 +22,8 @@ from users.models import Follow
 User = get_user_model()
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin,
+                 viewsets.GenericViewSet):
     """ Получение тегов """
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -27,8 +32,8 @@ class TagViewSet(viewsets.ModelViewSet):
     http_method_names = ('get',)
 
 
-class UserSubscriptionViewSet(mixins.ListModelMixin,
-                              viewsets.GenericViewSet):
+class UserSubscriptionViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """ Просмотр списка подписок """
     serializer_class = SubscriptionSerializer
 
     def get_queryset(self):
@@ -36,6 +41,7 @@ class UserSubscriptionViewSet(mixins.ListModelMixin,
 
 
 class UserSubscribeAPIView(APIView):
+    """ Подписка и отписка от автора """
     def post(self, request, author_id):
         author = get_object_or_404(User, id=author_id)
         user = self.request.user
@@ -52,9 +58,8 @@ class UserSubscribeAPIView(APIView):
         user = self.request.user
         if Follow.objects.filter(author=author, user=user).exists():
             Follow.objects.get(author=author).delete()
-            return Response('Успешная отписка',
-                            status=status.HTTP_204_NO_CONTENT)
-        return Response('Объект не найден', status=status.HTTP_400_BAD_REQUEST)
+            return Response(SUCCESS_UNFOLLOW, status=status.HTTP_204_NO_CONTENT)
+        return Response(FOLLOWING_NOT_FOUND, status=status.HTTP_400_BAD_REQUEST)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,7 +73,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """ Рецепты """
+    """ Вьюсет для работы с рецептами """
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -85,7 +90,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return self.queryset.filter(favorited__user=self.request.user)
             return self.queryset
         return self.queryset
-
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
@@ -105,37 +109,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk):
         if request.method == 'POST':
             if not Recipe.objects.all().filter(id=pk):
-                return Response('Такого рецепта не существует', status=status.HTTP_400_BAD_REQUEST)
+                return Response(RECIPE_NOT_FOUND, status=status.HTTP_400_BAD_REQUEST)
             if Best.objects.filter(user=request.user, recipe__id=pk).exists():
-                return Response('Уже в избранном', status=status.HTTP_400_BAD_REQUEST)
+                return Response(ALREADY_IN_BEST, status=status.HTTP_400_BAD_REQUEST)
             recipe = get_object_or_404(Recipe, id=pk)
             Best.objects.create(user=request.user, recipe=recipe)
             serializer = RecipeLimitedSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             if not Recipe.objects.all().filter(id=pk):
-                return Response('Такого рецепта не существует', status=status.HTTP_404_NOT_FOUND)
+                return Response(RECIPE_NOT_FOUND, status=status.HTTP_404_NOT_FOUND)
             if not Best.objects.filter(user=request.user, recipe__id=pk).exists():
-                return Response('Такого рецепта нет в избранном', status=status.HTTP_400_BAD_REQUEST)
+                return Response(RECIPE_NOT_IN_BEST, status=status.HTTP_400_BAD_REQUEST)
             Best.objects.filter(user=request.user, recipe__id=pk).delete()
-            return Response('Рецепт удален из избранного', status=status.HTTP_204_NO_CONTENT)
+            return Response(SUCCESS_REMOVE_FROM_BEST, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[permissions.IsAuthenticated])
     def shopping_cart(self, request, pk):
         if request.method == 'POST':
             if not Recipe.objects.all().filter(id=pk):
-                return Response('Такого рецепта не существует', status=status.HTTP_400_BAD_REQUEST)
+                return Response(RECIPE_NOT_FOUND, status=status.HTTP_400_BAD_REQUEST)
             if ShopCart.objects.filter(user=request.user, recipe__id=pk).exists():
-                return Response('Уже в корзине!', status=status.HTTP_400_BAD_REQUEST)
+                return Response(ALREADY_IN_CART, status=status.HTTP_400_BAD_REQUEST)
             recipe = get_object_or_404(Recipe, id=pk)
             ShopCart.objects.create(user=request.user, recipe=recipe)
             serializer = RecipeLimitedSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             if not Recipe.objects.all().filter(id=pk):
-                return Response('Такого рецепта не существует', status=status.HTTP_404_NOT_FOUND)
+                return Response(RECIPE_NOT_FOUND, status=status.HTTP_404_NOT_FOUND)
             if not ShopCart.objects.filter(user=request.user, recipe__id=pk).exists():
-                return Response('Такого рецепта нет в корзине', status=status.HTTP_400_BAD_REQUEST)
+                return Response(RECIPE_NOT_IN_CART, status=status.HTTP_400_BAD_REQUEST)
             ShopCart.objects.filter(user=request.user, recipe__id=pk).delete()
-            return Response('Рецепт удален из корзины', status=status.HTTP_204_NO_CONTENT)
+            return Response(SUCCESS_REMOVE_FROM_CART, status=status.HTTP_204_NO_CONTENT)
