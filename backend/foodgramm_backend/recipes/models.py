@@ -104,7 +104,7 @@ class IngredientRecipe(models.Model):
 class Best(models.Model):
     """ Избранные рецепты """
     user = models.ForeignKey(User, related_name='best', on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, related_name='in_favorites', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='favorited', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Избранный рецепт'

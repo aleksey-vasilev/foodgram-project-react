@@ -79,13 +79,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if user.is_authenticated:
             is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
             if is_in_shopping_cart:
-                breakpoint()
-                return user.shop_cart.all()
-            is_favorited = self.request.query_params.get('is_in_shopping_cart')
+                return self.queryset.filter(in_shopping_cart__user=self.request.user)
+            is_favorited = self.request.query_params.get('is_favorited')
             if is_favorited:
-                return user.best.all()
-            return user.recipes.all()
-        return Recipe.objects.all()
+                return self.queryset.filter(favorited__user=self.request.user)
+            return self.queryset
+        return self.queryset
 
 
     def get_serializer_class(self):
