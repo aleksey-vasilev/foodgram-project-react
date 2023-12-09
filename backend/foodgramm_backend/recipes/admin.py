@@ -10,7 +10,7 @@ admin.site.empty_value_display = 'Не задано'
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('recipe_image', 'name', 'author', 'best',)
     list_editable = ('name',)
-    list_filter = ('cooking_time',)
+    list_filter = ('author', 'name', 'tags')
 
     @admin.display(description='Картинка')
     def recipe_image(self, obj):
@@ -24,10 +24,9 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'measurement_unit',
-    )
+    list_display = ('name', 'measurement_unit',)
+    list_filter = ('name',)
+    search_fields = ('name',)
 
 
 @admin.register(Tag)
