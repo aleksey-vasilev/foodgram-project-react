@@ -6,7 +6,7 @@ from .views import (TagViewSet, UserSubscriptionViewSet,
                     RecipeViewSet)
 
 
-router = routers.SimpleRouter()
+router = routers.DefaultRouter()
 router.register('tags', TagViewSet, basename='tags')
 router.register('ingredients', IngredientViewSet, basename='ingredients')
 router.register('users/subscriptions', UserSubscriptionViewSet,

@@ -14,6 +14,7 @@ class RecipeValidatorMixin:
         if not data.get('tags'):
             raise serializers.ValidationError('Ни один тег не указан')
         return data
+
     def validate_ingredients(self, ingredients):
         if not ingredients:
             raise serializers.ValidationError('Нет ингредиентов')
