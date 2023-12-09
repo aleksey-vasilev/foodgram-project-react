@@ -139,7 +139,7 @@ class RecipeModifySerializer(RecipeValidatorMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = '__all__'
+        exclude = ('pub_date',)
         read_only_fields = ('author',)
 
     def create(self, validated_data):
@@ -188,7 +188,7 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = '__all__'
+        exclude = ('pub_date',)
 
     def get_is_favorited(self, recipe):
         user = self.context.get('request').user

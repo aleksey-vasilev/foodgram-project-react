@@ -10,6 +10,16 @@ from .constants import (MAX_NAME_CHARACTERS, MAX_COLOR_CHARACTERS,
 User = get_user_model()
 
 
+class RecipePubdateModel(models.Model):
+    """ Базовый класс для рецептов """
+
+    pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
+
+    class Meta:
+        abstract = True
+        ordering = ('pub_date',)
+
+
 class Tag(models.Model):
     """ Модель тега """
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
@@ -39,7 +49,7 @@ class Ingredient(models.Model):
         return self.name
 
 
-class Recipe(models.Model):
+class Recipe(RecipePubdateModel):
     """ Модель рецепта """
     ingredients = models.ManyToManyField(Ingredient, related_name='recipes', through='IngredientRecipe')
     tags = models.ManyToManyField(Tag, related_name='recipes', through='TagRecipe')
@@ -56,8 +66,7 @@ class Recipe(models.Model):
     )
     author = models.ForeignKey(User, related_name='recipes', on_delete=models.CASCADE)
 
-    class Meta:
-        ordering = ['id']
+    class Meta(RecipePubdateModel.Meta):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         constraints = [
