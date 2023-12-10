@@ -17,3 +17,5 @@ SUCCESS_REMOVE_FROM_BEST = 'Рецепт удален из избранного'
 ALREADY_IN_CART = 'Уже в корзине!'
 RECIPE_NOT_IN_CART = 'Такого рецепта нет в корзине'
 SUCCESS_REMOVE_FROM_CART = 'Рецепт удален из корзины'
+
+SHOP_LIST_TITLE = 'СПИСОК ПОКУПОК'

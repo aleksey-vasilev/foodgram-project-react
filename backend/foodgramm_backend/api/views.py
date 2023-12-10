@@ -17,14 +17,14 @@ from .constants import (SUCCESS_UNFOLLOW, FOLLOWING_NOT_FOUND,
                         RECIPE_NOT_FOUND, ALREADY_IN_BEST,
                         RECIPE_NOT_IN_BEST, SUCCESS_REMOVE_FROM_BEST,
                         ALREADY_IN_CART, SUCCESS_REMOVE_FROM_CART,
-                        RECIPE_NOT_IN_CART)
+                        RECIPE_NOT_IN_CART, SHOP_LIST_TITLE)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, TagSerializer,
                           IngredientSerializer, RecipeRetriveSerializer,
                           RecipeModifySerializer, SubscriptionSerializer,
                           RecipeLimitedSerializer)
-from recipes.models import (Tag, Ingredient, Recipe, Best, ShopCart)
+from recipes.models import (Tag, Ingredient, Recipe, Best, ShopCart, IngredientRecipe)
 from users.models import Follow
 
 User = get_user_model()
@@ -112,15 +112,32 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         buffer = io.BytesIO()
         p = canvas.Canvas(buffer)
-        PAGE_HEIGHT = p._pagesize[1]
+        page_height = p._pagesize[1]
         p.saveState()
         p.setStrokeColor(red)
         p.setLineWidth(5)
-        p.line(66,72,66,PAGE_HEIGHT-72)
+        p.line(66, 72, 66, page_height-72)
         pdfmetrics.registerFont(TTFont('FreeSans', 'FreeSans.ttf'))
         p.setFont('FreeSans', 24)
-        p.drawString(108, PAGE_HEIGHT-108, "СПИСОК ПОКУПОК")
+        p.drawString(108, page_height-108, SHOP_LIST_TITLE)
         p.setFont('FreeSans', 12)
+        p.drawString(66, page_height-42, 'Страница 1')
+        recipes = Recipe.objects.filter(in_shopping_cart__user=self.request.user)
+        shopping_list = dict()
+        for recipe in recipes:
+            ingredients = recipe.ingredients.all()
+            for ingredient in ingredients:
+                amount = IngredientRecipe.objects.get(ingredient=ingredient).amount
+                if ingredient in shopping_list:
+                    shopping_list[ingredient] += amount
+                else:
+                    shopping_list[ingredient] = amount
+        n = 1
+        print(shopping_list.items())
+        for ingredient, amount in shopping_list.items():
+            p.drawString(108, page_height-138-n*20,
+                         f'{n}. {ingredient.name} - {amount} {ingredient.measurement_unit}')
+            n += 1
         p.restoreState()
         p.showPage()
         p.save()
