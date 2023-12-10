@@ -19,7 +19,7 @@ from .constants import (SUCCESS_UNFOLLOW, FOLLOWING_NOT_FOUND,
                         RECIPE_NOT_IN_BEST, SUCCESS_REMOVE_FROM_BEST,
                         ALREADY_IN_CART, SUCCESS_REMOVE_FROM_CART,
                         RECIPE_NOT_IN_CART, SHOP_LIST_TITLE,
-                        SHOP_LIST_ITEMS_PER_PAGE)
+                        SHOP_LIST_HEAD, SHOP_LIST_ITEMS_PER_PAGE)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, TagSerializer,
@@ -118,7 +118,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         p.setFont('FreeSans', 24)
         p.drawString(108, p._pagesize[1] - 108, SHOP_LIST_TITLE)
         p.setFont('FreeSans', 12)
-        p.drawString(66, p._pagesize[1] - 42, f'ПРОДУКТОВЫЙ ПОМОЩНИК. Страница {page}')
+        p.drawString(66, p._pagesize[1] - 42, SHOP_LIST_HEAD + f'{page}')
         filename = os.path.join(settings.MEDIA_ROOT, 'shop_cart.png')
         p.drawImage(filename, 450, p._pagesize[1] - 138, width=100, height=100, mask='auto')
 

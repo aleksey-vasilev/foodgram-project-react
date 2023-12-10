@@ -19,4 +19,5 @@ RECIPE_NOT_IN_CART = 'Такого рецепта нет в корзине'
 SUCCESS_REMOVE_FROM_CART = 'Рецепт удален из корзины'
 
 SHOP_LIST_TITLE = 'СПИСОК ПОКУПОК'
+SHOP_LIST_HEAD = 'ПРОДУКТОВЫЙ ПОМОЩНИК. Страница '
 SHOP_LIST_ITEMS_PER_PAGE = 30
