@@ -18,8 +18,8 @@ class Base64ImageField(serializers.ImageField):
     """ Описание поля для кодорования изображения в Base64 """
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')  
-            ext = format.split('/')[-1]  
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
 
         return super().to_internal_value(data)
@@ -42,7 +42,8 @@ class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if not request.user.is_anonymous:
-            return Follow.objects.filter(user=request.user, author=obj).exists()
+            return Follow.objects.filter(
+                user=request.user, author=obj).exists()
         return False
 
 
@@ -130,7 +131,8 @@ class IngredientRetriveSerializer(serializers.ModelSerializer):
         return obj.ingredient.name
 
 
-class RecipeModifySerializer(RecipeValidatorMixin, serializers.ModelSerializer):
+class RecipeModifySerializer(RecipeValidatorMixin,
+                             serializers.ModelSerializer):
     """ Сериализатор для изменения рецептов """
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
@@ -162,8 +164,7 @@ class RecipeModifySerializer(RecipeValidatorMixin, serializers.ModelSerializer):
                 IngredientRecipe.objects.create(
                     ingredient_id=ingredient.get('id'),
                     amount=ingredient.get('amount'),
-                    recipe=instance
-                    )
+                    recipe=instance)
         if 'tags' in validated_data:
             tags = validated_data.pop('tags')
             instance.tags.clear()
@@ -182,7 +183,8 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True,
                             default=serializers.CurrentUserDefault())
-    ingredients = IngredientRetriveSerializer(many=True, source='ingredientrecipe')
+    ingredients = IngredientRetriveSerializer(many=True,
+                                              source='ingredientrecipe')
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 

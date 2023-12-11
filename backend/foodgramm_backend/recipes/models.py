@@ -24,7 +24,8 @@ class Tag(models.Model):
     """ Модель тега """
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
     color = models.CharField('Цвет', max_length=MAX_COLOR_CHARACTERS)
-    slug = models.CharField('Слаг', max_length=MAX_SLUG_CHARACTERS, unique=True)
+    slug = models.CharField('Слаг', max_length=MAX_SLUG_CHARACTERS,
+                            unique=True)
 
     class Meta:
         ordering = ['id']
@@ -38,7 +39,8 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     """ Модель ингредиента """
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
-    measurement_unit = models.CharField('Единицы измерения', max_length=MAX_UNIT_CHARACTERS)
+    measurement_unit = models.CharField('Единицы измерения',
+                                        max_length=MAX_UNIT_CHARACTERS)
 
     class Meta:
         ordering = ['id']
@@ -51,8 +53,10 @@ class Ingredient(models.Model):
 
 class Recipe(RecipePubdateModel):
     """ Модель рецепта """
-    ingredients = models.ManyToManyField(Ingredient, related_name='recipes', through='IngredientRecipe')
-    tags = models.ManyToManyField(Tag, related_name='recipes', through='TagRecipe')
+    ingredients = models.ManyToManyField(Ingredient, related_name='recipes',
+                                         through='IngredientRecipe')
+    tags = models.ManyToManyField(Tag, related_name='recipes',
+                                  through='TagRecipe')
     image = models.ImageField('Фото', upload_to='recipe/images/',
                               null=True, default=None)
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
@@ -64,7 +68,8 @@ class Recipe(RecipePubdateModel):
                               message=COOKING_VALIDATION_MESSAGE),
         ]
     )
-    author = models.ForeignKey(User, related_name='recipes', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='recipes',
+                               on_delete=models.CASCADE)
 
     class Meta(RecipePubdateModel.Meta):
         verbose_name = 'Рецепт'
@@ -112,8 +117,10 @@ class IngredientRecipe(models.Model):
 
 class Best(models.Model):
     """ Избранные рецепты """
-    user = models.ForeignKey(User, related_name='best', on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, related_name='favorited', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='best',
+                             on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='favorited',
+                               on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Избранный рецепт'
@@ -128,8 +135,10 @@ class Best(models.Model):
 
 class ShopCart(models.Model):
     """ Корзина для списка покупок """
-    user = models.ForeignKey(User, related_name='shop_cart', on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, related_name='in_shopping_cart', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='shop_cart',
+                             on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='in_shopping_cart',
+                               on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Список покупок'

@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
-from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR, NOT_EXIST_INGREDIENT_ERROR,
-                        AMOUNT_LT_ONE_ERROR, DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR)
-from recipes.models import Tag, Ingredient
+from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
+                        NOT_EXIST_INGREDIENT_ERROR, AMOUNT_LT_ONE_ERROR,
+                        DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR)
+from recipes.models import Ingredient
 from users.validators import validator_username
 
 
