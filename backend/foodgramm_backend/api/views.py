@@ -6,8 +6,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import red
 from rest_framework import viewsets, permissions, status, mixins
@@ -121,7 +119,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         p.setStrokeColor(red)
         p.setLineWidth(5)
         p.line(66, 72, 66, p._pagesize[1] - 72)
-        pdfmetrics.registerFont(TTFont('FreeSans', 'FreeSans.ttf'))
         p.setFont('FreeSans', 24)
         p.drawString(108, p._pagesize[1] - 108, SHOP_LIST_TITLE)
         p.setFont('FreeSans', 12)

@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from reportlab.rl_config import TTFSearchPath
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -138,7 +141,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / 'collected_static'
+STATIC_ROOT = BASE_DIR / 'static'
 
 MEDIA_URL = '/media/'
 
@@ -147,3 +150,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
+
+TTFSearchPath.append(STATIC_ROOT / 'fonts')
+pdfmetrics.registerFont(TTFont('FreeSans', 'FreeSans.ttf'))
