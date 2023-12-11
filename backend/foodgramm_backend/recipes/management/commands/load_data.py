@@ -8,7 +8,7 @@ from recipes.models import Ingredient
 class Command(BaseCommand):
     """ Импорт таблицы с ингредиентами в базу данных """
     def handle(self, *args, **options):
-        with open('../../data/ingredients.csv', encoding='utf-8') as file:
+        with open('../data/ingredients.csv', encoding='utf-8') as file:
             file_reader = csv.reader(file)
             for row in file_reader:
                 name, measurement_unit = row
