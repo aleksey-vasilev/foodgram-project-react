@@ -103,9 +103,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             is_favorited = self.request.query_params.get('is_favorited')
             if is_favorited:
                 return self.queryset.filter(favorited__user=self.request.user)
-        if self.request:
-            limit = int(self.request.query_params.get('limit'))
-            return self.queryset[:limit]
         return self.queryset
 
     def get_serializer_class(self):
