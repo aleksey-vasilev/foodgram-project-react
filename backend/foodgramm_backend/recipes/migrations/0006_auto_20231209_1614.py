@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='recipe',
-            options={'ordering': ('pub_date',), 'verbose_name': 'Рецепт', 'verbose_name_plural': 'Рецепты'},
+            options={'ordering': ('-pub_date',), 'verbose_name': 'Рецепт', 'verbose_name_plural': 'Рецепты'},
         ),
         migrations.AddField(
             model_name='recipe',
