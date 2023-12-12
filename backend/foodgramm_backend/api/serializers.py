@@ -24,6 +24,9 @@ class Base64ImageField(serializers.ImageField):
 
         return super().to_internal_value(data)
 
+    def to_representation(self, image):
+        return image.url
+
 
 class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
     """
