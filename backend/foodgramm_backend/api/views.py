@@ -112,7 +112,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 'ingredient__name').annotate(amount=Sum('amount'))
         return FileResponse(prepare_pdf_buffer(shopping_list),
                             as_attachment=True,
-                            filename="shop_cart.pdf",
+                            filename='shop_cart.pdf',
                             status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post', 'delete'],
