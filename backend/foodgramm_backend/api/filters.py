@@ -36,7 +36,6 @@ class RecipeFilter(filters.FilterSet):
             return queryset.filter(favorited__user=user)
         return queryset
 
-
     def get_shop_cart(self, queryset, name, value):
         user = self.request.user
         if int(value) and user.is_authenticated:

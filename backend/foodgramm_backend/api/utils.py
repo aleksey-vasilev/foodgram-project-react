@@ -8,6 +8,7 @@ from reportlab.lib.colors import red
 from .constants import (SHOP_LIST_TITLE, SHOP_LIST_HEAD,
                         SHOP_LIST_ITEMS_PER_PAGE)
 
+
 def prepare_pdf_buffer(shopping_list):
     def _page_create(p, page):
         p.saveState()
@@ -27,10 +28,10 @@ def prepare_pdf_buffer(shopping_list):
     page = 1
     n = 1
     _page_create(p, page)
-    for ingredient, amount in shopping_list.items():
+    for elem in shopping_list:
         p.drawString(108, p._pagesize[1] - 138 - n * 20 + (page - 1) * 600,
-                    f'{n}. {ingredient.name} - '
-                    f'{amount} {ingredient.measurement_unit}')
+                     f'{n}. {elem["ingredient__name"]} - '
+                     f'{elem["amount"]} {elem["ingredient__measurement_unit"]}')
         n += 1
         if n % SHOP_LIST_ITEMS_PER_PAGE == 1:
             page += 1

@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -22,6 +23,7 @@ from recipes.models import (Tag, Ingredient, Recipe,
                             User)
 from users.models import Follow
 from .utils import prepare_pdf_buffer
+
 
 class UserViewSet(djoser_views.UserViewSet):
     """ Работа с пользователями. """
@@ -104,20 +106,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
-        recipes = Recipe.objects.filter(
-            in_shopping_cart__user=self.request.user)
-        shopping_list = dict()
-        for recipe in recipes:
-            ingredients = recipe.ingredients.all()
-            for ingredient in ingredients:
-                amount = IngredientRecipe.objects.get(recipe=recipe,
-                                                      ingredient=ingredient
-                                                      ).amount
-                if ingredient in shopping_list:
-                    shopping_list[ingredient] += amount
-                else:
-                    shopping_list[ingredient] = amount
-
+        shopping_list = IngredientRecipe.objects.filter(
+            recipe__in_shopping_cart__user=request.user).values(
+            'ingredient__name', 'ingredient__measurement_unit').order_by(
+                'ingredient__name').annotate(amount=Sum('amount'))
         return FileResponse(prepare_pdf_buffer(shopping_list),
                             as_attachment=True,
                             filename="shop_cart.pdf",
