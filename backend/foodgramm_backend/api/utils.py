@@ -31,7 +31,8 @@ def prepare_pdf_buffer(shopping_list):
     for elem in shopping_list:
         p.drawString(108, p._pagesize[1] - 138 - n * 20 + (page - 1) * 600,
                      f'{n}. {elem["ingredient__name"]} - '
-                     f'{elem["amount"]} {elem["ingredient__measurement_unit"]}')
+                     f'{elem["amount"]} '
+                     f'{elem["ingredient__measurement_unit"]}')
         n += 1
         if n % SHOP_LIST_ITEMS_PER_PAGE == 1:
             page += 1
