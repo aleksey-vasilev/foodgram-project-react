@@ -7,3 +7,10 @@ MIN_COOKING_VALUE = 1
 COOKING_VALIDATION_MESSAGE = 'Введите значение не менее 1 минуты'
 MIN_INGREDIENT_VALUE = 1
 INGREDIENT_VALIDATION_MESSAGE = 'Выберите не менее одного ингредиента'
+
+BEGIN_LOAD = 'Начинаю загрузку '
+LOAD_DONE = 'Импорт успешно завершен'
+LOAD_ENTRIES = '| Импортировано записей '
+INGREDIENTS_CSV_PATH = 'data/ingredients.csv'
+TAGS_CSV_PATH = 'data/tags.csv'
+UNIQUE_CONSTRAINT = '| Пропущено существующих записей '
