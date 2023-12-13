@@ -1,13 +1,7 @@
-import io
-import os
-
 from django.http import FileResponse
-from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from djoser import views as djoser_views
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import red
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,8 +10,7 @@ from .constants import (SUCCESS_UNFOLLOW, FOLLOWING_NOT_FOUND,
                         RECIPE_NOT_FOUND, ALREADY_IN_BEST,
                         RECIPE_NOT_IN_BEST, SUCCESS_REMOVE_FROM_BEST,
                         ALREADY_IN_CART, SUCCESS_REMOVE_FROM_CART,
-                        RECIPE_NOT_IN_CART, SHOP_LIST_TITLE,
-                        SHOP_LIST_HEAD, SHOP_LIST_ITEMS_PER_PAGE)
+                        RECIPE_NOT_IN_CART)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, TagSerializer,
@@ -28,7 +21,7 @@ from recipes.models import (Tag, Ingredient, Recipe,
                             Best, ShopCart, IngredientRecipe,
                             User)
 from users.models import Follow
-
+from .utils import prepare_pdf_buffer
 
 class UserViewSet(djoser_views.UserViewSet):
     """ Работа с пользователями. """
@@ -108,28 +101,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeRetriveSerializer
         return RecipeModifySerializer
 
-    def _page_create(self, p, page):
-        p.saveState()
-        p.setStrokeColor(red)
-        p.setLineWidth(5)
-        p.line(66, 72, 66, p._pagesize[1] - 72)
-        p.setFont('FreeSans', 24)
-        p.drawString(108, p._pagesize[1] - 108, SHOP_LIST_TITLE)
-        p.setFont('FreeSans', 12)
-        p.drawString(66, p._pagesize[1] - 42, SHOP_LIST_HEAD + f'{page}')
-        filename = os.path.join(settings.MEDIA_ROOT, 'shop_cart.png')
-        p.drawImage(filename, 450, p._pagesize[1] - 138,
-                    width=100, height=100, mask='auto')
-
     @action(detail=False, methods=['get'],
             permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
-        buffer = io.BytesIO()
-        p = canvas.Canvas(buffer)
         recipes = Recipe.objects.filter(
             in_shopping_cart__user=self.request.user)
         shopping_list = dict()
-        page = 1
         for recipe in recipes:
             ingredients = recipe.ingredients.all()
             for ingredient in ingredients:
@@ -140,21 +117,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     shopping_list[ingredient] += amount
                 else:
                     shopping_list[ingredient] = amount
-        n = 1
-        self._page_create(p, page)
-        for ingredient, amount in shopping_list.items():
-            p.drawString(108, p._pagesize[1] - 138 - n * 20 + (page - 1) * 600,
-                         f'{n}. {ingredient.name} - '
-                         f'{amount} {ingredient.measurement_unit}')
-            n += 1
-            if n % SHOP_LIST_ITEMS_PER_PAGE == 1:
-                page += 1
-                p.restoreState()
-                p.showPage()
-                self._page_create(p, page)
-        p.save()
-        buffer.seek(0)
-        return FileResponse(buffer, as_attachment=True,
+
+        return FileResponse(prepare_pdf_buffer(shopping_list),
+                            as_attachment=True,
                             filename="shop_cart.pdf",
                             status=status.HTTP_200_OK)
 
