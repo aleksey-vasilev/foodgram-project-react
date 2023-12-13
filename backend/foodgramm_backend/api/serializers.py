@@ -1,35 +1,25 @@
-import base64
-
-from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
+from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .constants import (DULICATE_FOLLOW_ERROR, SELF_FOLLOW_ERROR)
-from .mixins import UsernameValidatorMixin, RecipeValidatorMixin
+from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
+                        NOT_EXIST_INGREDIENT_ERROR, AMOUNT_LT_ONE_ERROR,
+                        DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR,
+                        DULICATE_FOLLOW_ERROR, SELF_FOLLOW_ERROR,
+                        NO_AUTH_USERS_ME)
 from recipes.models import (Tag, Ingredient, Recipe,
-                            IngredientRecipe, TagRecipe)
+                            IngredientRecipe, TagRecipe, User)
 from users.models import Follow
 
-User = get_user_model()
 
-
-class Base64ImageField(serializers.ImageField):
+class Base64ImageField(DRF_Base64ImageField):
     """ Описание поля для кодорования изображения в Base64. """
-
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
 
     def to_representation(self, image):
         return image.url
 
 
-class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор для кастомной модели пользователя.
     Используется Djoser'ом для обработки стандартных эндпоинтов.
@@ -44,19 +34,17 @@ class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True},
                         'is_subscribed': {'read_only': True}}
 
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if not request.user.is_anonymous:
-            return Follow.objects.filter(
-                user=request.user, author=obj).exists()
-        return False
+    def get_is_subscribed(self, author):
+        request = self.context['request']
+        return (request and request.user.is_authenticated
+                and request.user.follower.filter(author=author).exists())
 
 
 class SubscriptionSerializer(UserSerializer):
     """ Сериализатор для получения списка подписок пользователя. """
 
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.ReadOnlyField()
 
     class Meta:
         model = User
@@ -66,18 +54,14 @@ class SubscriptionSerializer(UserSerializer):
                             'is_subscribed', 'recipes', 'recipes_count')
 
     def get_recipes(self, obj):
-        request = self.context.get('request')
+        request = self.context['request']
         recipes_limit = None
         if request:
             recipes_limit = request.query_params.get('recipes_limit')
-        if recipes_limit:
-            recipes = obj.recipes.all()[:int(recipes_limit)]
-        else:
             recipes = obj.recipes.all()
+        if recipes_limit and recipes_limit.isdigit():
+            recipes = recipes[:int(recipes_limit)]
         return RecipeLimitedSerializer(recipes, many=True).data
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
 
 
 class FollowSerializer(serializers.ModelSerializer):
@@ -85,7 +69,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Follow
-        fields = '__all__'
+        fields = ('user', 'author')
         validators = [
             UniqueTogetherValidator(queryset=Follow.objects.all(),
                                     fields=('user', 'author'),
@@ -124,6 +108,16 @@ class IngredientModifySerializer(serializers.ModelSerializer):
         model = IngredientRecipe
         fields = ('id', 'amount')
 
+    def validate_amount(self, amount):
+        if int(amount) < 1:
+            raise serializers.ValidationError(AMOUNT_LT_ONE_ERROR)
+        return amount
+    
+    def validate_id(self, id):
+        if not Ingredient.objects.filter(id=id).exists():
+            raise serializers.ValidationError(NOT_EXIST_INGREDIENT_ERROR)
+        return id
+
 
 class IngredientRetriveSerializer(serializers.ModelSerializer):
     """ Сериализатор для изменения ингредиентов. """
@@ -142,8 +136,7 @@ class IngredientRetriveSerializer(serializers.ModelSerializer):
         return obj.ingredient.name
 
 
-class RecipeModifySerializer(RecipeValidatorMixin,
-                             serializers.ModelSerializer):
+class RecipeModifySerializer(serializers.ModelSerializer):
     """ Сериализатор для изменения рецептов. """
 
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
@@ -185,8 +178,22 @@ class RecipeModifySerializer(RecipeValidatorMixin,
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        return RecipeRetriveSerializer(instance, context={
-            'request': self.context.get('request')},).data
+        return RecipeRetriveSerializer(instance, context=self.context).data
+
+    def validate(self, data):
+        ingredients = data.get('ingredients')
+        if not ingredients:
+            raise serializers.ValidationError(NO_INGREDIENTS_ERROR)
+        tags = data.get('tags')
+        if not tags:
+            raise serializers.ValidationError(NO_TAGS_ERROR)
+        all_ingredients = [ingredient.get('id') for ingredient in ingredients]
+        if len(all_ingredients) != len(set(all_ingredients)):
+            raise serializers.ValidationError(DUPLICATE_INGREDIENT_ERROR)
+        all_tags = [tag for tag in tags]
+        if len(all_tags) != len(set(all_tags)):
+            raise serializers.ValidationError(DUPLICATE_TAG_ERROR)
+        return data
 
 
 class RecipeRetriveSerializer(serializers.ModelSerializer):

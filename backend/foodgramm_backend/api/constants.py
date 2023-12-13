@@ -1,5 +1,3 @@
-USERS_ME_PATH = '/api/users/me/'
-
 NO_INGREDIENTS_ERROR = 'Ни один ингридиент не указан'
 NO_TAGS_ERROR = 'Ни один тег не указан'
 NOT_EXIST_INGREDIENT_ERROR = 'Несуществующий ингредиент'
@@ -17,6 +15,7 @@ SUCCESS_REMOVE_FROM_BEST = 'Рецепт удален из избранного'
 ALREADY_IN_CART = 'Уже в корзине!'
 RECIPE_NOT_IN_CART = 'Такого рецепта нет в корзине'
 SUCCESS_REMOVE_FROM_CART = 'Рецепт удален из корзины'
+NO_AUTH_USERS_ME = 'Нельзя получить профиль анонимного пользователя'
 
 SHOP_LIST_TITLE = 'СПИСОК ПОКУПОК'
 SHOP_LIST_HEAD = 'ПРОДУКТОВЫЙ ПОМОЩНИК. Страница '

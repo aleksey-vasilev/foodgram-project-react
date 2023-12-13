@@ -6,12 +6,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from djoser import views as djoser_views
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import red
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .constants import (SUCCESS_UNFOLLOW, FOLLOWING_NOT_FOUND,
                         RECIPE_NOT_FOUND, ALREADY_IN_BEST,
@@ -32,6 +32,47 @@ from users.models import Follow
 User = get_user_model()
 
 
+class UserViewSet(djoser_views.UserViewSet):
+    """ Работа с пользователями. """
+
+    def get_permissions(self):
+        if self.action == 'me':
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
+    @action(detail=False, methods=['get'])
+    def subscriptions(self, request):
+        queryset = User.objects.filter(following__user=self.request.user)
+        page = self.paginate_queryset(queryset)
+        serializer = SubscriptionSerializer(page, many=True,
+                                            context={'request': request})
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=True, methods=['post', 'delete'])
+    def subscribe(self, request, **kwargs):
+        author = get_object_or_404(User, id=kwargs['id'])
+
+        if request.method == 'POST':
+            user = self.request.user
+            serializer = FollowSerializer(
+                data={'user': user.id, 'author': kwargs['id']}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            serializer = SubscriptionSerializer(author,
+                                                context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            user = self.request.user
+            if Follow.objects.filter(author=author, user=user).exists():
+                Follow.objects.get(author=author).delete()
+                return Response(SUCCESS_UNFOLLOW,
+                                status=status.HTTP_204_NO_CONTENT)
+            return Response(FOLLOWING_NOT_FOUND,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
 class TagViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin,
                  viewsets.GenericViewSet):
     """ Получение тегов. """
@@ -41,41 +82,6 @@ class TagViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin,
     permission_classes = (permissions.AllowAny,)
     pagination_class = None
     http_method_names = ('get',)
-
-
-class UserSubscriptionViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    """ Просмотр списка подписок. """
-
-    serializer_class = SubscriptionSerializer
-
-    def get_queryset(self):
-        return User.objects.filter(following__user=self.request.user)
-
-
-class UserSubscribeAPIView(APIView):
-    """ Подписка и отписка от автора. """
-
-    def post(self, request, author_id):
-        author = get_object_or_404(User, id=author_id)
-        user = self.request.user
-        serializer = FollowSerializer(
-            data={'user': user.id, 'author': author_id}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        serializer = SubscriptionSerializer(author,
-                                            context={'request': request})
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, author_id):
-        author = get_object_or_404(User, id=author_id)
-        user = self.request.user
-        if Follow.objects.filter(author=author, user=user).exists():
-            Follow.objects.get(author=author).delete()
-            return Response(SUCCESS_UNFOLLOW,
-                            status=status.HTTP_204_NO_CONTENT)
-        return Response(FOLLOWING_NOT_FOUND,
-                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):

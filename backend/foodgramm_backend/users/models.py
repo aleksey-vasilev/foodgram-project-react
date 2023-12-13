@@ -37,6 +37,10 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
         ordering = ('username',)
 
+    @property
+    def recipes_count(self):
+        return self.recipes.count()
+
     def __str__(self):
         return self.username
 
