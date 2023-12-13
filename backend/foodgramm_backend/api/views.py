@@ -121,9 +121,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeRetriveSerializer
         return RecipeModifySerializer
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
     def _page_create(self, p, page):
         p.saveState()
         p.setStrokeColor(red)

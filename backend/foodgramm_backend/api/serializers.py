@@ -1,12 +1,12 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
-                        NOT_EXIST_INGREDIENT_ERROR, AMOUNT_LT_ONE_ERROR,
+                        NO_IMAGE_FIELD, SELF_FOLLOW_ERROR,
                         DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR,
-                        DULICATE_FOLLOW_ERROR, SELF_FOLLOW_ERROR,
-                        NO_AUTH_USERS_ME)
+                        DULICATE_FOLLOW_ERROR)
 from recipes.models import (Tag, Ingredient, Recipe,
                             IngredientRecipe, TagRecipe, User)
 from users.models import Follow
@@ -81,6 +81,9 @@ class FollowSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(SELF_FOLLOW_ERROR)
         return data
 
+    def to_representation(self, instance):
+        return SubscriptionSerializer(instance, context=self.context).data
+
 
 class TagSerializer(serializers.ModelSerializer):
     """ Сериализатор для тегов. """
@@ -101,39 +104,28 @@ class IngredientSerializer(serializers.ModelSerializer):
 class IngredientModifySerializer(serializers.ModelSerializer):
     """ Сериализатор для изменения ингредиентов. """
 
-    id = serializers.IntegerField(write_only=True)
-    amount = serializers.IntegerField(write_only=True)
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all())
+    amount = serializers.IntegerField(write_only=True,
+                                      validators=[MaxValueValidator(1000),
+                                                  MinValueValidator(1)])
 
     class Meta:
         model = IngredientRecipe
         fields = ('id', 'amount')
 
-    def validate_amount(self, amount):
-        if int(amount) < 1:
-            raise serializers.ValidationError(AMOUNT_LT_ONE_ERROR)
-        return amount
-    
-    def validate_id(self, id):
-        if not Ingredient.objects.filter(id=id).exists():
-            raise serializers.ValidationError(NOT_EXIST_INGREDIENT_ERROR)
-        return id
-
 
 class IngredientRetriveSerializer(serializers.ModelSerializer):
     """ Сериализатор для изменения ингредиентов. """
 
-    name = serializers.SerializerMethodField()
-    measurement_unit = serializers.SerializerMethodField()
+    id = serializers.ReadOnlyField(source='ingredient.id')
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit')
 
     class Meta:
         model = IngredientRecipe
         fields = ('id', 'name', 'measurement_unit', 'amount')
-
-    def get_measurement_unit(self, obj):
-        return obj.ingredient.measurement_unit
-
-    def get_name(self, obj):
-        return obj.ingredient.name
 
 
 class RecipeModifySerializer(serializers.ModelSerializer):
@@ -143,6 +135,9 @@ class RecipeModifySerializer(serializers.ModelSerializer):
                                               many=True)
     image = Base64ImageField()
     ingredients = IngredientModifySerializer(many=True)
+    cooking_time = serializers.IntegerField(write_only=True,
+                                            validators=[MaxValueValidator(1000),
+                                                        MinValueValidator(1)])
 
     class Meta:
         model = Recipe
@@ -152,11 +147,12 @@ class RecipeModifySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
+        validated_data['author'] = self.context['request'].user
         recipe = Recipe.objects.create(**validated_data)
         for tag in tags:
             TagRecipe.objects.create(tag=tag, recipe=recipe)
         for ingredient in ingredients:
-            IngredientRecipe.objects.create(ingredient_id=ingredient.get('id'),
+            IngredientRecipe.objects.create(ingredient=ingredient.get('id'),
                                             amount=ingredient.get('amount'),
                                             recipe=recipe)
         return recipe
@@ -167,7 +163,7 @@ class RecipeModifySerializer(serializers.ModelSerializer):
             instance.ingredients.clear()
             for ingredient in ingredients:
                 IngredientRecipe.objects.create(
-                    ingredient_id=ingredient.get('id'),
+                    ingredient=ingredient.get('id'),
                     amount=ingredient.get('amount'),
                     recipe=instance)
         if 'tags' in validated_data:
@@ -193,6 +189,8 @@ class RecipeModifySerializer(serializers.ModelSerializer):
         all_tags = [tag for tag in tags]
         if len(all_tags) != len(set(all_tags)):
             raise serializers.ValidationError(DUPLICATE_TAG_ERROR)
+        if not data.get('image'):
+            raise serializers.ValidationError(NO_IMAGE_FIELD)
         return data
 
 
