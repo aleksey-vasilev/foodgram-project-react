@@ -8,6 +8,7 @@ from .constants import (MAX_USERNAME_CHARACTERS, MAX_EMAIL_CHARACTERS,
 
 class User(AbstractUser):
     """ Класс пользователей. """
+
     username = models.CharField(
         'Логин',
         max_length=MAX_USERNAME_CHARACTERS,
@@ -41,6 +42,8 @@ class User(AbstractUser):
 
 
 class Follow(models.Model):
+    """ Класс для подписки на автора. """
+
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='follower')
     author = models.ForeignKey(

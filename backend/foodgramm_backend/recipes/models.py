@@ -11,7 +11,7 @@ User = get_user_model()
 
 
 class RecipePubdateModel(models.Model):
-    """ Базовый класс для рецептов """
+    """ Базовый класс для рецептов. """
 
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
@@ -21,7 +21,8 @@ class RecipePubdateModel(models.Model):
 
 
 class Tag(models.Model):
-    """ Модель тега """
+    """ Модель тега. """
+
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
     color = models.CharField('Цвет', max_length=MAX_COLOR_CHARACTERS)
     slug = models.CharField('Слаг', max_length=MAX_SLUG_CHARACTERS,
@@ -37,7 +38,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    """ Модель ингредиента """
+    """ Модель ингредиента. """
+
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
     measurement_unit = models.CharField('Единицы измерения',
                                         max_length=MAX_UNIT_CHARACTERS)
@@ -52,7 +54,8 @@ class Ingredient(models.Model):
 
 
 class Recipe(RecipePubdateModel):
-    """ Модель рецепта """
+    """ Модель рецепта. """
+
     ingredients = models.ManyToManyField(Ingredient, related_name='recipes',
                                          through='IngredientRecipe')
     tags = models.ManyToManyField(Tag, related_name='recipes',
@@ -84,7 +87,8 @@ class Recipe(RecipePubdateModel):
 
 
 class TagRecipe(models.Model):
-    """ Промежуточная таблица между моделями Tag и Recipe """
+    """ Промежуточная таблица между моделями Tag и Recipe. """
+
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
@@ -93,7 +97,8 @@ class TagRecipe(models.Model):
 
 
 class IngredientRecipe(models.Model):
-    """ Промежуточная таблица между моделями Ingredient и Recipe """
+    """ Промежуточная таблица между моделями Ingredient и Recipe. """
+
     ingredient = models.ForeignKey(Ingredient, related_name="ingredientrecipe",
                                    on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, related_name="ingredientrecipe",
@@ -116,7 +121,8 @@ class IngredientRecipe(models.Model):
 
 
 class Best(models.Model):
-    """ Избранные рецепты """
+    """ Избранные рецепты. """
+
     user = models.ForeignKey(User, related_name='best',
                              on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, related_name='favorited',
@@ -134,7 +140,8 @@ class Best(models.Model):
 
 
 class ShopCart(models.Model):
-    """ Корзина для списка покупок """
+    """ Корзина для списка покупок. """
+
     user = models.ForeignKey(User, related_name='shop_cart',
                              on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, related_name='in_shopping_cart',

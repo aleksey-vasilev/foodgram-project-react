@@ -15,7 +15,8 @@ User = get_user_model()
 
 
 class Base64ImageField(serializers.ImageField):
-    """ Описание поля для кодорования изображения в Base64 """
+    """ Описание поля для кодорования изображения в Base64. """
+
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -33,6 +34,7 @@ class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
     Сериализатор для кастомной модели пользователя.
     Используется Djoser'ом для обработки стандартных эндпоинтов.
     """
+
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -51,7 +53,8 @@ class UserSerializer(UsernameValidatorMixin, serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(UserSerializer):
-    """ Сериализатор для получения списка подписок пользователя """
+    """ Сериализатор для получения списка подписок пользователя. """
+
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -78,7 +81,8 @@ class SubscriptionSerializer(UserSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    """ Сериализатор для обработки подписки пользователя на автора"""
+    """ Сериализатор для обработки подписки пользователя на автора. """
+
     class Meta:
         model = Follow
         fields = '__all__'
@@ -95,21 +99,24 @@ class FollowSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """ Сериализатор для тегов """
+    """ Сериализатор для тегов. """
+
     class Meta:
         fields = ('id', 'name', 'color', 'slug')
         model = Tag
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """ Сериализатор для списка ингредиентов """
+    """ Сериализатор для списка ингредиентов. """
+
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
 
 class IngredientModifySerializer(serializers.ModelSerializer):
-    """ Сериализатор для изменения ингредиентов """
+    """ Сериализатор для изменения ингредиентов. """
+
     id = serializers.IntegerField(write_only=True)
     amount = serializers.IntegerField(write_only=True)
 
@@ -119,7 +126,8 @@ class IngredientModifySerializer(serializers.ModelSerializer):
 
 
 class IngredientRetriveSerializer(serializers.ModelSerializer):
-    """ Сериализатор для изменения ингредиентов """
+    """ Сериализатор для изменения ингредиентов. """
+
     name = serializers.SerializerMethodField()
     measurement_unit = serializers.SerializerMethodField()
 
@@ -136,7 +144,8 @@ class IngredientRetriveSerializer(serializers.ModelSerializer):
 
 class RecipeModifySerializer(RecipeValidatorMixin,
                              serializers.ModelSerializer):
-    """ Сериализатор для изменения рецептов """
+    """ Сериализатор для изменения рецептов. """
+
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
     image = Base64ImageField()
@@ -181,7 +190,8 @@ class RecipeModifySerializer(RecipeValidatorMixin,
 
 
 class RecipeRetriveSerializer(serializers.ModelSerializer):
-    """ Сериализатор для чтения рецептов """
+    """ Сериализатор для чтения рецептов. """
+
     image = Base64ImageField()
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True,
@@ -209,7 +219,8 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
 
 
 class RecipeLimitedSerializer(serializers.ModelSerializer):
-    """ Сериализатор для чтения рецептов находящихся в корзине и избранном """
+    """ Сериализатор для чтения рецептов находящихся в корзине и избранном. """
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')

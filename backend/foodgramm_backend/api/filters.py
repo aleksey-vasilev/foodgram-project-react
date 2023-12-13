@@ -4,7 +4,8 @@ from recipes.models import Ingredient, Recipe
 
 
 class IngredientFilter(filters.FilterSet):
-    """ Фильтр по отдельным ингредиентам"""
+    """ Фильтр по отдельным ингредиентам. """
+
     name = filters.CharFilter(
         field_name='name',
         lookup_expr='istartswith',
@@ -16,7 +17,8 @@ class IngredientFilter(filters.FilterSet):
 
 
 class RecipeFilter(filters.FilterSet):
-    """ Фильтр рецептов по тегам и автору """
+    """ Фильтр рецептов по тегам и автору. """
+
     tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
 
     class Meta:

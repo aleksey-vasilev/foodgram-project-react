@@ -34,7 +34,8 @@ User = get_user_model()
 
 class TagViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin,
                  viewsets.GenericViewSet):
-    """ Получение тегов """
+    """ Получение тегов. """
+
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (permissions.AllowAny,)
@@ -43,7 +44,8 @@ class TagViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin,
 
 
 class UserSubscriptionViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    """ Просмотр списка подписок """
+    """ Просмотр списка подписок. """
+
     serializer_class = SubscriptionSerializer
 
     def get_queryset(self):
@@ -51,7 +53,8 @@ class UserSubscriptionViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 
 class UserSubscribeAPIView(APIView):
-    """ Подписка и отписка от автора """
+    """ Подписка и отписка от автора. """
+
     def post(self, request, author_id):
         author = get_object_or_404(User, id=author_id)
         user = self.request.user
@@ -76,7 +79,8 @@ class UserSubscribeAPIView(APIView):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    """ Получение списка ингридиентов """
+    """ Получение списка ингридиентов. """
+
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (permissions.AllowAny,)
@@ -86,7 +90,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """ Вьюсет для работы с рецептами """
+    """ Вьюсет для работы с рецептами. """
+
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter

@@ -9,8 +9,7 @@ MIN_INGREDIENT_VALUE = 1
 INGREDIENT_VALIDATION_MESSAGE = 'Выберите не менее одного ингредиента'
 
 BEGIN_LOAD = 'Начинаю загрузку '
-LOAD_DONE = 'Импорт успешно завершен'
-LOAD_ENTRIES = '| Импортировано записей '
+LOAD_DONE = 'Импорт завершен для модели {}. Импортировано {}. Пропущено {}.'
 INGREDIENTS_CSV_PATH = 'data/ingredients.csv'
 TAGS_CSV_PATH = 'data/tags.csv'
-UNIQUE_CONSTRAINT = '| Пропущено существующих записей '
+UNIQUE_CONSTRANT = 'Запись {} в модели {} неуникальна'

@@ -8,13 +8,15 @@ from users.validators import validator_username
 
 
 class UsernameValidatorMixin:
-    """ Валидация имени пользователя """
+    """ Валидация имени пользователя. """
+
     def validate_username(self, value):
         return validator_username(value)
 
 
 class RecipeValidatorMixin:
-    """ Валидация рецепта """
+    """ Валидация рецепта. """
+
     def validate(self, data):
         if not data.get('ingredients'):
             raise serializers.ValidationError(NO_INGREDIENTS_ERROR)
