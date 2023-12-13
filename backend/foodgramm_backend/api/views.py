@@ -3,7 +3,6 @@ import os
 
 from django.http import FileResponse
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from djoser import views as djoser_views
@@ -26,10 +25,9 @@ from .serializers import (FollowSerializer, TagSerializer,
                           RecipeModifySerializer, SubscriptionSerializer,
                           RecipeLimitedSerializer)
 from recipes.models import (Tag, Ingredient, Recipe,
-                            Best, ShopCart, IngredientRecipe)
+                            Best, ShopCart, IngredientRecipe,
+                            User)
 from users.models import Follow
-
-User = get_user_model()
 
 
 class UserViewSet(djoser_views.UserViewSet):
@@ -50,8 +48,6 @@ class UserViewSet(djoser_views.UserViewSet):
 
     @action(detail=True, methods=['post', 'delete'])
     def subscribe(self, request, **kwargs):
-        author = get_object_or_404(User, id=kwargs['id'])
-
         if request.method == 'POST':
             user = self.request.user
             serializer = FollowSerializer(
@@ -59,14 +55,17 @@ class UserViewSet(djoser_views.UserViewSet):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            serializer = SubscriptionSerializer(author,
-                                                context={'request': request})
+            serializer = SubscriptionSerializer(
+                get_object_or_404(User, id=kwargs['id']),
+                context={'request': request}
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
             user = self.request.user
-            if Follow.objects.filter(author=author, user=user).exists():
-                Follow.objects.get(author=author).delete()
+            follow = Follow.objects.filter(user=user, author_id=kwargs['id'])
+            if follow.exists():
+                follow.delete()
                 return Response(SUCCESS_UNFOLLOW,
                                 status=status.HTTP_204_NO_CONTENT)
             return Response(FOLLOWING_NOT_FOUND,
@@ -98,23 +97,11 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """ Вьюсет для работы с рецептами. """
 
-    queryset = Recipe.objects.all()
+    queryset = (Recipe.objects.all().select_related('author').
+                prefetch_related('tags', 'ingredients'))
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrReadOnly,)
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated:
-            is_in_shopping_cart = self.request.query_params.get(
-                'is_in_shopping_cart')
-            if is_in_shopping_cart:
-                return self.queryset.filter(
-                    in_shopping_cart__user=self.request.user)
-            is_favorited = self.request.query_params.get('is_favorited')
-            if is_favorited:
-                return self.queryset.filter(favorited__user=self.request.user)
-        return self.queryset
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
