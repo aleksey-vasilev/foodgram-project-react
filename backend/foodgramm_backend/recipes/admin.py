@@ -14,7 +14,7 @@ class IngredientRecipeInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    inlines = (IngredientRecipeInline, )    
+    inlines = (IngredientRecipeInline, )
     list_display = ('recipe_image', 'name', 'author', 'best',)
     list_editable = ('name',)
     list_filter = ('author', 'name', 'tags')
@@ -42,7 +42,7 @@ class TagAdmin(admin.ModelAdmin):
 
 
 @admin.register(ShopCart)
-class ShopCartAdmin(admin.ModelAdmin):    
+class ShopCartAdmin(admin.ModelAdmin):
     list_display = ('recipe',)
     list_filter = ('user',)
 
