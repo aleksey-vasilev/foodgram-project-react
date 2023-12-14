@@ -8,16 +8,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .constants import (SUCCESS_UNFOLLOW, FOLLOWING_NOT_FOUND,
-                        RECIPE_NOT_FOUND, ALREADY_IN_BEST,
-                        RECIPE_NOT_IN_BEST, SUCCESS_REMOVE_FROM_BEST,
-                        ALREADY_IN_CART, SUCCESS_REMOVE_FROM_CART,
-                        RECIPE_NOT_IN_CART)
+                        RECIPE_NOT_FOUND)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, TagSerializer,
                           IngredientSerializer, RecipeRetriveSerializer,
                           RecipeModifySerializer, SubscriptionSerializer,
-                          RecipeLimitedSerializer)
+                          RecipeLimitedSerializer, BestSerializer,
+                          ShopCartSerializer)
 from recipes.models import (Tag, Ingredient, Recipe,
                             Best, ShopCart, IngredientRecipe,
                             User)
@@ -127,55 +125,42 @@ class RecipeViewSet(viewsets.ModelViewSet):
                             filename='shop_cart.pdf',
                             status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[permissions.IsAuthenticated])
-    def favorite(self, request, pk):
-        if request.method == 'POST':
-            if not Recipe.objects.all().filter(id=pk):
-                return Response(RECIPE_NOT_FOUND,
-                                status=status.HTTP_400_BAD_REQUEST)
-            if Best.objects.filter(user=request.user, recipe__id=pk).exists():
-                return Response(ALREADY_IN_BEST,
-                                status=status.HTTP_400_BAD_REQUEST)
-            recipe = get_object_or_404(Recipe, id=pk)
-            Best.objects.create(user=request.user, recipe=recipe)
-            serializer = RecipeLimitedSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            if not Recipe.objects.all().filter(id=pk):
-                return Response(RECIPE_NOT_FOUND,
-                                status=status.HTTP_404_NOT_FOUND)
-            if not Best.objects.filter(user=request.user,
-                                       recipe__id=pk).exists():
-                return Response(RECIPE_NOT_IN_BEST,
-                                status=status.HTTP_400_BAD_REQUEST)
-            Best.objects.filter(user=request.user, recipe__id=pk).delete()
-            return Response(SUCCESS_REMOVE_FROM_BEST,
-                            status=status.HTTP_204_NO_CONTENT)
+    @staticmethod
+    def save_method(serializer, pk, request):
+        if not Recipe.objects.all().filter(id=pk):
+            return Response(RECIPE_NOT_FOUND,
+                            status=status.HTTP_400_BAD_REQUEST)
+        context = {'request': request}
+        recipe = get_object_or_404(Recipe, id=pk)
+        data = {'user': request.user.id, 'recipe': recipe.id}
+        serialized = serializer(data=data, context=context)
+        serialized.is_valid(raise_exception=True)
+        serialized.save()
+        return Response(serialized.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['post', 'delete'],
+    @staticmethod
+    def delete_method(model, pk, request):
+        if not model.objects.filter(user=request.user, recipe__id=pk).exists():
+            return Response(RECIPE_NOT_FOUND,
+                            status=status.HTTP_400_BAD_REQUEST)
+        get_object_or_404(model, user=request.user,
+                          recipe=get_object_or_404(Recipe, id=pk)).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=('POST',),
             permission_classes=[permissions.IsAuthenticated])
     def shopping_cart(self, request, pk):
-        if request.method == 'POST':
-            if not Recipe.objects.all().filter(id=pk):
-                return Response(RECIPE_NOT_FOUND,
-                                status=status.HTTP_400_BAD_REQUEST)
-            if ShopCart.objects.filter(user=request.user,
-                                       recipe__id=pk).exists():
-                return Response(ALREADY_IN_CART,
-                                status=status.HTTP_400_BAD_REQUEST)
-            recipe = get_object_or_404(Recipe, id=pk)
-            ShopCart.objects.create(user=request.user, recipe=recipe)
-            serializer = RecipeLimitedSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            if not Recipe.objects.all().filter(id=pk):
-                return Response(RECIPE_NOT_FOUND,
-                                status=status.HTTP_404_NOT_FOUND)
-            if not ShopCart.objects.filter(user=request.user,
-                                           recipe__id=pk).exists():
-                return Response(RECIPE_NOT_IN_CART,
-                                status=status.HTTP_400_BAD_REQUEST)
-            ShopCart.objects.filter(user=request.user, recipe__id=pk).delete()
-            return Response(SUCCESS_REMOVE_FROM_CART,
-                            status=status.HTTP_204_NO_CONTENT)
+        return self.save_method(ShopCartSerializer, pk, request)
+
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk):
+        return self.delete_method(ShopCart, pk, request)
+
+    @action(detail=True, methods=('POST',),
+            permission_classes=[permissions.IsAuthenticated])
+    def favorite(self, request, pk):
+        return self.save_method(BestSerializer, pk, request)
+
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk):
+        return self.delete_method(Best, pk, request)

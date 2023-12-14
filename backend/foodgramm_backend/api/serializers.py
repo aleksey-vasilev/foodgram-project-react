@@ -6,9 +6,11 @@ from rest_framework.validators import UniqueTogetherValidator
 from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
                         NO_IMAGE_FIELD, SELF_FOLLOW_ERROR,
                         DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR,
-                        DULICATE_FOLLOW_ERROR)
+                        DULICATE_FOLLOW_ERROR, ALREADY_IN_BEST,
+                        ALREADY_IN_CART)
 from recipes.models import (Tag, Ingredient, Recipe,
-                            IngredientRecipe, TagRecipe, User)
+                            IngredientRecipe, TagRecipe, User,
+                            ShopCart, Best)
 from users.models import Follow
 
 
@@ -215,6 +217,46 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
 class RecipeLimitedSerializer(serializers.ModelSerializer):
     """ Сериализатор для чтения рецептов находящихся в корзине и избранном. """
 
+    image = Base64ImageField()
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class ShopCartSerializer(serializers.ModelSerializer):
+    """ Сериализатор для рецептов находящихся в корзине """
+
+    class Meta:
+        fields = ('recipe', 'user')
+        model = ShopCart
+
+    def validate(self, data):
+        user = data['user']
+        if user.shop_cart.filter(recipe=data['recipe']).exists():
+            raise serializers.ValidationError(ALREADY_IN_CART)
+        return data
+
+    def to_representation(self, instance):
+        return RecipeLimitedSerializer(
+            instance.recipe,
+            context={'request': self.context.get('request')}).data
+
+
+class BestSerializer(serializers.ModelSerializer):
+    """ Сериализатор для  рецептов находящихся в избранном. """
+
+    class Meta:
+        fields = ('recipe', 'user')
+        model = Best
+
+    def validate(self, data):
+        user = data['user']
+        if user.best.filter(recipe=data['recipe']).exists():
+            raise serializers.ValidationError(ALREADY_IN_BEST)
+        return data
+
+    def to_representation(self, instance):
+        return RecipeLimitedSerializer(
+            instance.recipe,
+            context={'request': self.context.get('request')}).data
