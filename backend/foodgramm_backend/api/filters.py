@@ -23,21 +23,10 @@ class RecipeFilter(filters.FilterSet):
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all())
-    is_favorited = filters.CharFilter(method='get_favorited')
-    is_in_shopping_cart = filters.CharFilter(method='get_shop_cart')
+    is_favorited = filters.CharFilter(field_name='is_favorited', default=0)
+    is_in_shopping_cart = filters.CharFilter(
+        field_name='is_in_shopping_cart', default=0)
 
     class Meta:
         model = Recipe
         fields = ('author',)
-
-    def get_favorited(self, queryset, name, value):
-        user = self.request.user
-        if int(value) and user.is_authenticated:
-            return queryset.filter(favorited__user=user)
-        return queryset
-
-    def get_shop_cart(self, queryset, name, value):
-        user = self.request.user
-        if int(value) and user.is_authenticated:
-            return queryset.filter(in_shopping_cart__user=user)
-        return queryset

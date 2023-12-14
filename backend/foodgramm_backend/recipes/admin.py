@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from .models import Recipe, Ingredient, Tag, Best
+from .models import Recipe, Ingredient, Tag
 
 admin.site.empty_value_display = 'Не задано'
 
@@ -19,7 +19,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='В избранном')
     def best(self, obj):
-        return Best.objects.filter(recipe=obj).count()
+        return obj.favorited.count()
 
 
 @admin.register(Ingredient)

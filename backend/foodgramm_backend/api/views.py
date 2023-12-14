@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Sum, Exists, OuterRef
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -97,6 +97,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrReadOnly,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            is_favorited = user.best.filter(recipe__pk=OuterRef('pk'))
+            is_in_shopping_cart = user.shop_cart.filter(
+                recipe__pk=OuterRef('pk'))
+            self.queryset = self.queryset.annotate(
+                is_in_shopping_cart=Exists(is_in_shopping_cart),
+                is_favorited=Exists(is_favorited)
+            )
+        return self.queryset
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:

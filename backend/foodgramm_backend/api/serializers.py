@@ -204,22 +204,12 @@ class RecipeRetriveSerializer(serializers.ModelSerializer):
                             default=serializers.CurrentUserDefault())
     ingredients = IngredientRetriveSerializer(many=True,
                                               source='ingredientrecipe')
-    is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    is_favorited = serializers.BooleanField(read_only=True, default=0)
+    is_in_shopping_cart = serializers.BooleanField(read_only=True, default=0)
 
     class Meta:
         model = Recipe
         exclude = ('pub_date',)
-
-    def get_is_favorited(self, recipe):
-        request = self.context['request']
-        return (request and request.user.is_authenticated
-                and request.user.best.filter(recipe=recipe).exists())
-
-    def get_is_in_shopping_cart(self, recipe):
-        request = self.context['request']
-        return (request and request.user.is_authenticated
-                and request.user.shop_cart.filter(recipe=recipe).exists())
 
 
 class RecipeLimitedSerializer(serializers.ModelSerializer):
