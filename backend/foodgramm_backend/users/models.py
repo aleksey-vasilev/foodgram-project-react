@@ -1,14 +1,15 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import F, Q
+
 from .validators import validator_username
-from .constants import (MAX_USERNAME_CHARACTERS, MAX_EMAIL_CHARACTERS,
-                        MAX_PASSWORD_CHARACTERS)
+from .constants import MAX_USERNAME_CHARACTERS, MAX_EMAIL_CHARACTERS
 
 
 class User(AbstractUser):
     """ Класс пользователей. """
 
+    USERNAME_FIELD = 'email'
     username = models.CharField(
         'Логин',
         max_length=MAX_USERNAME_CHARACTERS,
@@ -26,11 +27,8 @@ class User(AbstractUser):
                                   max_length=MAX_USERNAME_CHARACTERS)
     last_name = models.CharField('Фамилия',
                                  max_length=MAX_USERNAME_CHARACTERS)
-    password = models.CharField('Пароль', max_length=MAX_PASSWORD_CHARACTERS)
 
-    EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'password', 'first_name', 'last_name']
+    REQUIRED_FIELDS = ('username', 'password', 'first_name', 'last_name')
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -48,12 +46,16 @@ class User(AbstractUser):
 class Follow(models.Model):
     """ Класс для подписки на автора. """
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='follower')
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='following')
+    user = models.ForeignKey(User,
+                             on_delete=models.CASCADE,
+                             related_name='follower')
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               related_name='following')
 
     class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
                 fields=['author', 'user'],

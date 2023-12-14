@@ -14,8 +14,7 @@ from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, TagSerializer,
                           IngredientSerializer, RecipeRetriveSerializer,
                           RecipeModifySerializer, SubscriptionSerializer,
-                          RecipeLimitedSerializer, BestSerializer,
-                          ShopCartSerializer)
+                          BestSerializer, ShopCartSerializer)
 from recipes.models import (Tag, Ingredient, Recipe,
                             Best, ShopCart, IngredientRecipe,
                             User)
@@ -99,8 +98,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated:
-            is_favorited = user.best.filter(recipe__pk=OuterRef('pk'))
-            is_in_shopping_cart = user.shop_cart.filter(
+            is_favorited = user.best_set.filter(recipe__pk=OuterRef('pk'))
+            is_in_shopping_cart = user.shopcart_set.filter(
                 recipe__pk=OuterRef('pk'))
             self.queryset = self.queryset.annotate(
                 is_in_shopping_cart=Exists(is_in_shopping_cart),
@@ -117,7 +116,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
         shopping_list = IngredientRecipe.objects.filter(
-            recipe__in_shopping_cart__user=request.user).values(
+            recipe__shopcart_set__user=request.user).values(
             'ingredient__name', 'ingredient__measurement_unit').order_by(
                 'ingredient__name').annotate(amount=Sum('amount'))
         return FileResponse(prepare_pdf_buffer(shopping_list),

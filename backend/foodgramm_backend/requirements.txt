@@ -1,6 +1,7 @@
 gunicorn==20.1.0 
 Django==3.2.16
 djoser==2.1.0
+django-colorfield==0.11.0
 django-filter==23.3
 djangorestframework==3.12.4
 djangorestframework-simplejwt==4.7.2

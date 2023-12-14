@@ -9,7 +9,7 @@ from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
                         DULICATE_FOLLOW_ERROR, ALREADY_IN_BEST,
                         ALREADY_IN_CART)
 from recipes.models import (Tag, Ingredient, Recipe,
-                            IngredientRecipe, TagRecipe, User,
+                            IngredientRecipe, User,
                             ShopCart, Best)
 from users.models import Follow
 
@@ -172,8 +172,7 @@ class RecipeModifySerializer(serializers.ModelSerializer):
         self.create_ingredientrecipe(ingredients, instance)
         tags = validated_data.pop('tags')
         instance.tags.clear()
-        for tag in tags:
-            TagRecipe.objects.create(tag=tag, recipe=instance)
+        instance.tags.set(tags)
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -233,7 +232,7 @@ class ShopCartSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         user = data['user']
-        if user.shop_cart.filter(recipe=data['recipe']).exists():
+        if user.shopcart_set.filter(recipe=data['recipe']).exists():
             raise serializers.ValidationError(ALREADY_IN_CART)
         return data
 
@@ -252,7 +251,7 @@ class BestSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         user = data['user']
-        if user.best.filter(recipe=data['recipe']).exists():
+        if user.best_set.filter(recipe=data['recipe']).exists():
             raise serializers.ValidationError(ALREADY_IN_BEST)
         return data
 

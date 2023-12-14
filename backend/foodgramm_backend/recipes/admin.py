@@ -26,7 +26,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='В избранном')
     def best(self, obj):
-        return obj.favorited.count()
+        return obj.best_set.count()
 
 
 @admin.register(Ingredient)
