@@ -10,6 +10,8 @@ class User(AbstractUser):
     """ Класс пользователей. """
 
     USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'password', 'first_name', 'last_name')
+
     username = models.CharField(
         'Логин',
         max_length=MAX_USERNAME_CHARACTERS,
@@ -28,16 +30,10 @@ class User(AbstractUser):
     last_name = models.CharField('Фамилия',
                                  max_length=MAX_USERNAME_CHARACTERS)
 
-    REQUIRED_FIELDS = ('username', 'password', 'first_name', 'last_name')
-
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ('username',)
-
-    @property
-    def recipes_count(self):
-        return self.recipes.count()
 
     def __str__(self):
         return self.username
@@ -48,10 +44,12 @@ class Follow(models.Model):
 
     user = models.ForeignKey(User,
                              on_delete=models.CASCADE,
-                             related_name='follower')
+                             related_name='follower',
+                             verbose_name='Позписчик')
     author = models.ForeignKey(User,
                                on_delete=models.CASCADE,
-                               related_name='following')
+                               related_name='following',
+                               verbose_name='Автор')
 
     class Meta:
         verbose_name = 'Подписка'

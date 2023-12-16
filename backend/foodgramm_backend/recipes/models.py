@@ -3,10 +3,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 from .constants import (MAX_NAME_CHARACTERS, MAX_COLOR_CHARACTERS,
-                        MAX_SLUG_CHARACTERS, MAX_UNIT_CHARACTERS,
-                        MIN_COOKING_VALUE, COOKING_VALIDATION_MESSAGE,
-                        MIN_INGREDIENT_VALUE, INGREDIENT_VALIDATION_MESSAGE,
-                        MAX_COOKING_VALUE, MAX_INGREDIENT_VALUE)
+                        MAX_SLUG_CHARACTERS, MIN_COOKING_VALUE,
+                        COOKING_VALIDATION_MESSAGE, MIN_INGREDIENT_VALUE,
+                        INGREDIENT_VALIDATION_MESSAGE, MAX_SMALL_INTEGER)
 
 from users.models import User
 
@@ -33,7 +32,7 @@ class Ingredient(models.Model):
 
     name = models.CharField('Название', max_length=MAX_NAME_CHARACTERS)
     measurement_unit = models.CharField('Единицы измерения',
-                                        max_length=MAX_UNIT_CHARACTERS)
+                                        max_length=MAX_SMALL_INTEGER)
 
     class Meta:
         verbose_name = 'Ингредиент'
@@ -41,7 +40,7 @@ class Ingredient(models.Model):
         ordering = ('name',)
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'measurement_unit'],
+                fields=('name', 'measurement_unit'),
                 name='unique_ingredient')]
 
     def __str__(self):
@@ -63,7 +62,7 @@ class Recipe(models.Model):
         validators=[
             MinValueValidator(MIN_COOKING_VALUE,
                               message=COOKING_VALIDATION_MESSAGE),
-            MaxValueValidator(MAX_COOKING_VALUE,
+            MaxValueValidator(MAX_SMALL_INTEGER,
                               message=COOKING_VALIDATION_MESSAGE),
         ]
     )
@@ -77,7 +76,7 @@ class Recipe(models.Model):
         ordering = ('-pub_date',)
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'author'],
+                fields=('name', 'author'),
                 name='unique_recipe')]
 
     def __str__(self):
@@ -95,7 +94,7 @@ class IngredientRecipe(models.Model):
         validators=[
             MinValueValidator(MIN_INGREDIENT_VALUE,
                               message=INGREDIENT_VALIDATION_MESSAGE),
-            MaxValueValidator(MAX_INGREDIENT_VALUE,
+            MaxValueValidator(MAX_SMALL_INTEGER,
                               message=INGREDIENT_VALIDATION_MESSAGE),
         ]
     )
@@ -103,7 +102,7 @@ class IngredientRecipe(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
+                fields=('recipe', 'ingredient'),
                 name='unique_ingredients')]
 
     def __str__(self):
@@ -118,9 +117,12 @@ class ShopCartBestBaseModel(models.Model):
 
     class Meta:
         abstract = True
+        constraints = [models.UniqueConstraint(
+            fields=('user', 'recipe'),
+            name='unique_%(class)s')]
 
     def __str__(self):
-        return f'{self.recipe}'
+        return f'{self.recipe} добавлен в {self.__class__.__name__}'
 
 
 class Best(ShopCartBestBaseModel):
@@ -129,9 +131,6 @@ class Best(ShopCartBestBaseModel):
     class Meta(ShopCartBestBaseModel.Meta):
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
-        constraints = [models.UniqueConstraint(
-            fields=['user', 'recipe'],
-            name='unique_best')]
         default_related_name = 'best_set'
 
 
@@ -141,7 +140,4 @@ class ShopCart(ShopCartBestBaseModel):
     class Meta(ShopCartBestBaseModel.Meta):
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-        constraints = [models.UniqueConstraint(
-            fields=['user', 'recipe'],
-            name='unique_shopcart')]
         default_related_name = 'shopcart_set'

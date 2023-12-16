@@ -20,3 +20,6 @@ NO_IMAGE_FIELD = 'Нет поля с изображением'
 SHOP_LIST_TITLE = 'СПИСОК ПОКУПОК'
 SHOP_LIST_HEAD = 'ПРОДУКТОВЫЙ ПОМОЩНИК. Страница '
 SHOP_LIST_ITEMS_PER_PAGE = 30
+
+AMOUNT_MIN_VALUE = 1
+AMOUNT_MAX_VALUE = 2147483647

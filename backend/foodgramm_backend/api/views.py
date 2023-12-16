@@ -2,7 +2,7 @@ from django.db.models import Sum, Exists, OuterRef
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from djoser import views as djoser_views
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -19,10 +19,10 @@ from recipes.models import (Tag, Ingredient, Recipe,
                             Best, ShopCart, IngredientRecipe,
                             User)
 from users.models import Follow
-from .utils import prepare_pdf_buffer
+from .prepare_pdf import prepare_pdf_buffer
 
 
-class UserViewSet(djoser_views.UserViewSet):
+class UserViewSet(DjoserUserViewSet):
     """ Работа с пользователями. """
 
     def get_permissions(self):
@@ -38,30 +38,32 @@ class UserViewSet(djoser_views.UserViewSet):
                                             context={'request': request})
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=True, methods=['post', 'delete'])
-    def subscribe(self, request, **kwargs):
-        if request.method == 'POST':
-            user = self.request.user
-            serializer = FollowSerializer(
-                data={'user': user.id, 'author': kwargs['id']}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            serializer = SubscriptionSerializer(
-                get_object_or_404(User, id=kwargs['id']),
-                context={'request': request}
-            )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    @action(detail=True, methods=('POST',),
+            permission_classes=[permissions.IsAuthenticated])
+    def subscribe(self, request, id):
+        user = self.request.user
+        serializer = FollowSerializer(
+            data={'user': user.id, 'author': id},
+            context={'request': request, 'id': pk}
+        )
+        serializer.is_valid(raise_exception=True)
+        data = serializer.save()
+        serializer = SubscriptionSerializer(
+            get_object_or_404(User, id=id),
+            context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'DELETE':
-            user = self.request.user
-            follow = Follow.objects.filter(user=user, author_id=kwargs['id'])
-            if follow.exists():
-                follow.delete()
-                return Response(SUCCESS_UNFOLLOW,
-                                status=status.HTTP_204_NO_CONTENT)
-            return Response(FOLLOWING_NOT_FOUND,
-                            status=status.HTTP_400_BAD_REQUEST)
+    @subscribe.mapping.delete
+    def delete_subscribe(self, request, id):
+        user = self.request.user
+        follow = Follow.objects.filter(user=user, author_id=id)
+        if follow.exists():
+            follow.delete()
+            return Response(SUCCESS_UNFOLLOW,
+                            status=status.HTTP_204_NO_CONTENT)
+        return Response(FOLLOWING_NOT_FOUND,
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin,
@@ -89,8 +91,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """ Вьюсет для работы с рецептами. """
 
-    queryset = (Recipe.objects.all().select_related('author').
-                prefetch_related('tags', 'ingredients'))
+    queryset = Recipe.objects.all().select_related(
+        'author').prefetch_related('tags', 'ingredients')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrReadOnly,)
@@ -126,12 +128,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def save_method(serializer, pk, request):
-        if not Recipe.objects.all().filter(id=pk):
-            return Response(RECIPE_NOT_FOUND,
-                            status=status.HTTP_400_BAD_REQUEST)
         context = {'request': request}
-        recipe = get_object_or_404(Recipe, id=pk)
-        data = {'user': request.user.id, 'recipe': recipe.id}
+        data = {'user': request.user.id, 'recipe__id': pk}
         serialized = serializer(data=data, context=context)
         serialized.is_valid(raise_exception=True)
         serialized.save()
@@ -139,11 +137,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def delete_method(model, pk, request):
-        if not model.objects.filter(user=request.user, recipe__id=pk).exists():
+        recipe = model.objects.filter(user=request.user, recipe__id=pk)
+        if not recipe.exists():
             return Response(RECIPE_NOT_FOUND,
                             status=status.HTTP_400_BAD_REQUEST)
-        get_object_or_404(model, user=request.user,
-                          recipe=get_object_or_404(Recipe, id=pk)).delete()
+        recipe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=('POST',),

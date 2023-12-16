@@ -1,4 +1,4 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -7,7 +7,8 @@ from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
                         NO_IMAGE_FIELD, SELF_FOLLOW_ERROR,
                         DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR,
                         DULICATE_FOLLOW_ERROR, ALREADY_IN_BEST,
-                        ALREADY_IN_CART)
+                        ALREADY_IN_CART, AMOUNT_MAX_VALUE,
+                        AMOUNT_MIN_VALUE)
 from recipes.models import (Tag, Ingredient, Recipe,
                             IngredientRecipe, User,
                             ShopCart, Best)
@@ -32,9 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'first_name', 'last_name',
-                  'email', 'password', 'is_subscribed')
-        extra_kwargs = {'password': {'write_only': True},
-                        'is_subscribed': {'read_only': True}}
+                  'email', 'is_subscribed')
 
     def get_is_subscribed(self, author):
         request = self.context['request']
@@ -46,7 +45,7 @@ class SubscriptionSerializer(UserSerializer):
     """ Сериализатор для получения списка подписок пользователя. """
 
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.ReadOnlyField()
+    recipes_count = serializers.ReadOnlyField(source='recipes.count')
 
     class Meta:
         model = User
@@ -61,8 +60,11 @@ class SubscriptionSerializer(UserSerializer):
         if request:
             recipes_limit = request.query_params.get('recipes_limit')
             recipes = obj.recipes.all()
-        if recipes_limit and recipes_limit.isdigit():
-            recipes = recipes[:int(recipes_limit)]
+        if recipes_limit:
+            try:
+                recipes = recipes[:int(recipes_limit)]
+            except ValueError:
+                pass
         return RecipeLimitedSerializer(recipes, many=True).data
 
 
@@ -82,9 +84,6 @@ class FollowSerializer(serializers.ModelSerializer):
         if data['user'] == data['author']:
             raise serializers.ValidationError(SELF_FOLLOW_ERROR)
         return data
-
-    def to_representation(self, instance):
-        return SubscriptionSerializer(instance, context=self.context).data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -109,8 +108,8 @@ class IngredientModifySerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all())
     amount = serializers.IntegerField(write_only=True,
-                                      validators=[MaxValueValidator(1000),
-                                                  MinValueValidator(1)])
+                                      max_value=AMOUNT_MAX_VALUE,
+                                      min_value=AMOUNT_MIN_VALUE)
 
     class Meta:
         model = IngredientRecipe
@@ -137,11 +136,9 @@ class RecipeModifySerializer(serializers.ModelSerializer):
                                               many=True)
     image = Base64ImageField()
     ingredients = IngredientModifySerializer(many=True)
-    cooking_time = serializers.IntegerField(
-        write_only=True,
-        validators=[MaxValueValidator(1000),
-                    MinValueValidator(1)]
-    )
+    cooking_time = serializers.IntegerField(write_only=True,
+                                            max_value=AMOUNT_MAX_VALUE,
+                                            min_value=AMOUNT_MIN_VALUE)
 
     class Meta:
         model = Recipe
@@ -188,12 +185,14 @@ class RecipeModifySerializer(serializers.ModelSerializer):
         all_ingredients = [ingredient.get('id') for ingredient in ingredients]
         if len(all_ingredients) != len(set(all_ingredients)):
             raise serializers.ValidationError(DUPLICATE_INGREDIENT_ERROR)
-        all_tags = [tag for tag in tags]
-        if len(all_tags) != len(set(all_tags)):
+        if len(tags) != len(set(tags)):
             raise serializers.ValidationError(DUPLICATE_TAG_ERROR)
-        if not data.get('image'):
-            raise serializers.ValidationError(NO_IMAGE_FIELD)
         return data
+
+    def validate_image(self, image):
+        if not image:
+            raise serializers.ValidationError(NO_IMAGE_FIELD)
+        return image
 
 
 class RecipeRetriveSerializer(serializers.ModelSerializer):
@@ -239,7 +238,7 @@ class ShopCartSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return RecipeLimitedSerializer(
             instance.recipe,
-            context={'request': self.context.get('request')}).data
+            ccontext=self.context).data
 
 
 class BestSerializer(serializers.ModelSerializer):
@@ -258,4 +257,4 @@ class BestSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return RecipeLimitedSerializer(
             instance.recipe,
-            context={'request': self.context.get('request')}).data
+            context=self.context).data

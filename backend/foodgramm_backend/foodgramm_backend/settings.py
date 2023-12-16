@@ -12,7 +12,7 @@ load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'default')
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', False) == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split()
 
@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'api',
     'recipes',
     'users',
+    'colorfield',
 ]
 
 MIDDLEWARE = [

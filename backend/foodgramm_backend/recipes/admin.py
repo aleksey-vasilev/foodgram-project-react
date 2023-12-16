@@ -9,13 +9,14 @@ admin.site.empty_value_display = 'Не задано'
 
 class IngredientRecipeInline(admin.TabularInline):
     model = IngredientRecipe
-    extra = 0
+    extra = 1
+    min_num = 1
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     inlines = (IngredientRecipeInline, )
-    list_display = ('recipe_image', 'name', 'author', 'best',)
+    list_display = ('recipe_image', 'name', 'author', 'ingr',)
     list_editable = ('name',)
     list_filter = ('author', 'name', 'tags')
 
@@ -24,9 +25,9 @@ class RecipeAdmin(admin.ModelAdmin):
         return mark_safe(f'<img src={obj.image.url} width="80" height="60">'
                          ) if obj.image else None
 
-    @admin.display(description='В избранном')
-    def best(self, obj):
-        return obj.best_set.count()
+    @admin.display(description='Ингредиенты')
+    def ingr(self, obj):
+        return list(obj.ingredients.values_list('name', flat=True))
 
 
 @admin.register(Ingredient)
