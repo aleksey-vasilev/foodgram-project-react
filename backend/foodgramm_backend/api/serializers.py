@@ -85,6 +85,8 @@ class FollowSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(SELF_FOLLOW_ERROR)
         return data
 
+    def to_representation(self, instance):
+        return SubscriptionSerializer(instance.author, context=self.context).data
 
 class TagSerializer(serializers.ModelSerializer):
     """ Сериализатор для тегов. """
@@ -222,16 +224,13 @@ class RecipeLimitedSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class ShopCartSerializer(serializers.ModelSerializer):
-    """ Сериализатор для рецептов находящихся в корзине """
-
-    class Meta:
-        fields = ('recipe', 'user')
-        model = ShopCart
+class BestShopCartSerializer(serializers.BaseSerializer):
+    """ Родитель для сериалайзеров Best и ShopCart. """
 
     def validate(self, data):
-        user = data['user']
-        if user.shopcart_set.filter(recipe=data['recipe']).exists():
+        breakpoint()
+        if self.Meta.model.filter(recipe=data['recipe'],
+                                  user=data['user']).exists():
             raise serializers.ValidationError(ALREADY_IN_CART)
         return data
 
@@ -239,22 +238,18 @@ class ShopCartSerializer(serializers.ModelSerializer):
         return RecipeLimitedSerializer(
             instance.recipe,
             ccontext=self.context).data
+    
 
+class ShopCartSerializer(BestShopCartSerializer):
+    """ Сериализатор для рецептов находящихся в корзине """
+
+    class Meta:
+        model = ShopCart
+        fields = ('recipe', 'user')
 
 class BestSerializer(serializers.ModelSerializer):
     """ Сериализатор для  рецептов находящихся в избранном. """
 
     class Meta:
-        fields = ('recipe', 'user')
         model = Best
-
-    def validate(self, data):
-        user = data['user']
-        if user.best_set.filter(recipe=data['recipe']).exists():
-            raise serializers.ValidationError(ALREADY_IN_BEST)
-        return data
-
-    def to_representation(self, instance):
-        return RecipeLimitedSerializer(
-            instance.recipe,
-            context=self.context).data
+        fields = ('recipe', 'user')

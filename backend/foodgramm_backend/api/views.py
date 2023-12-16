@@ -44,14 +44,10 @@ class UserViewSet(DjoserUserViewSet):
         user = self.request.user
         serializer = FollowSerializer(
             data={'user': user.id, 'author': id},
-            context={'request': request, 'id': pk}
-        )
-        serializer.is_valid(raise_exception=True)
-        data = serializer.save()
-        serializer = SubscriptionSerializer(
-            get_object_or_404(User, id=id),
             context={'request': request}
         )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
@@ -128,8 +124,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def save_method(serializer, pk, request):
+        breakpoint()
         context = {'request': request}
-        data = {'user': request.user.id, 'recipe__id': pk}
+        recipe = get_object_or_404(Recipe, id=pk) 
+        data = {'user': request.user.id, 'recipe': recipe.id} 
         serialized = serializer(data=data, context=context)
         serialized.is_valid(raise_exception=True)
         serialized.save()
