@@ -1,5 +1,3 @@
-from itertools import chain
-
 from django.db.models import Sum
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend

@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -7,9 +6,8 @@ from rest_framework.validators import UniqueTogetherValidator
 from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
                         NO_IMAGE_FIELD, SELF_FOLLOW_ERROR,
                         DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR,
-                        DULICATE_FOLLOW_ERROR, ALREADY_IN_BEST,
-                        ALREADY_IN_CART, AMOUNT_MAX_VALUE,
-                        AMOUNT_MIN_VALUE)
+                        DULICATE_FOLLOW_ERROR, ALREADY_IN,
+                        AMOUNT_MAX_VALUE, AMOUNT_MIN_VALUE)
 from recipes.models import (Tag, Ingredient, Recipe,
                             IngredientRecipe, User,
                             ShopCart, Best)
@@ -87,7 +85,9 @@ class FollowSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        return SubscriptionSerializer(instance.author, context=self.context).data
+        return SubscriptionSerializer(instance.author,
+                                      context=self.context).data
+
 
 class TagSerializer(serializers.ModelSerializer):
     """ Сериализатор для тегов. """
@@ -232,23 +232,24 @@ class BestShopCartSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if self.Meta.model.objects.all().filter(**data).exists():
-            raise serializers.ValidationError(ALREADY_IN_CART)
+            raise serializers.ValidationError(ALREADY_IN)
         return data
 
     def to_representation(self, instance):
         return RecipeLimitedSerializer(
             instance.recipe,
             context=self.context).data
-    
+
     class Meta:
         fields = ('recipe', 'user')
-    
+
 
 class ShopCartSerializer(BestShopCartSerializer):
     """ Сериализатор для рецептов находящихся в корзине """
 
     class Meta(BestShopCartSerializer.Meta):
         model = ShopCart
+
 
 class BestSerializer(BestShopCartSerializer):
     """ Сериализатор для  рецептов находящихся в избранном. """

@@ -19,7 +19,7 @@ class Command(BaseCommand):
             for path, model in to_do_list:
                 obj_list = []
                 with open(settings.BASE_DIR / path,
-                        encoding='utf-8') as file:
+                          encoding='utf-8') as file:
                     self.stdout.write(BEGIN_LOAD + path)
                     file_reader = csv.DictReader(file)
                     number = 0
