@@ -48,11 +48,11 @@ class Ingredient(models.Model):
 
 
 class AnnotatededRecipeModel(models.Manager):
-    def annotated(self):
+    def annotated(self, user):
         is_favorited = Best.objects.all().filter(
-            recipe__pk=models.OuterRef('pk'))
+            recipe__pk=models.OuterRef('pk'), user=user)
         is_in_shopping_cart = ShopCart.objects.all().filter(
-            recipe__pk=models.OuterRef('pk'))
+            recipe__pk=models.OuterRef('pk'), user=user)
         return self.annotate(
             is_in_shopping_cart=models.Exists(is_in_shopping_cart),
             is_favorited=models.Exists(is_favorited))
