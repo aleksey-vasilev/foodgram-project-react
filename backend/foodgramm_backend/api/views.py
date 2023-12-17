@@ -124,10 +124,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def save_method(serializer, pk, request):
-        breakpoint()
         context = {'request': request}
-        recipe = get_object_or_404(Recipe, id=pk) 
-        data = {'user': request.user.id, 'recipe': recipe.id} 
+        data = {'user': request.user.id, 'recipe': pk}
         serialized = serializer(data=data, context=context)
         serialized.is_valid(raise_exception=True)
         serialized.save()
