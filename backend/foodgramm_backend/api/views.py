@@ -93,7 +93,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnly,)
 
     def get_queryset(self):
-        return Recipe.objects.annotated(self.request.user)
+        user = self.request.user
+        if user.is_authenticated:
+            return Recipe.objects.annotated(user)
+        return self.queryset
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
