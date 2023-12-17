@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
 from rest_framework import serializers
@@ -156,6 +157,7 @@ class RecipeModifySerializer(serializers.ModelSerializer):
             for ingredient in ingredients
         )
 
+    @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -165,6 +167,7 @@ class RecipeModifySerializer(serializers.ModelSerializer):
         self.create_ingredientrecipe(ingredients, recipe)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         instance.ingredients.clear()
@@ -237,58 +240,18 @@ class BestShopCartSerializer(serializers.ModelSerializer):
             instance.recipe,
             context=self.context).data
     
+    class Meta:
+        fields = ('recipe', 'user')
+    
 
 class ShopCartSerializer(BestShopCartSerializer):
     """ Сериализатор для рецептов находящихся в корзине """
 
-    class Meta:
-        model = ShopCart
-        fields = ('recipe', 'user')
-
-class BestSerializer(serializers.ModelSerializer):
-    """ Сериализатор для  рецептов находящихся в избранном. """
-
-    class Meta:
-        model = Best
-        fields = ('recipe', 'user')
-
-
-'''
-class ShopCartSerializer(serializers.ModelSerializer):
-    """ Сериализатор для рецептов находящихся в корзине """
-
-    class Meta:
-        fields = ('recipe', 'user')
+    class Meta(BestShopCartSerializer.Meta):
         model = ShopCart
 
-    def validate(self, data):
-        user = data['user']
-        if user.shopcart_set.filter(recipe=data['recipe']).exists():
-            raise serializers.ValidationError(ALREADY_IN_CART)
-        return data
-
-    def to_representation(self, instance):
-        return RecipeLimitedSerializer(
-            instance.recipe,
-            context={'request': self.context.get('request')}).data
-
-
-class BestSerializer(serializers.ModelSerializer):
+class BestSerializer(BestShopCartSerializer):
     """ Сериализатор для  рецептов находящихся в избранном. """
 
-    class Meta:
-        fields = ('recipe', 'user')
+    class Meta(BestShopCartSerializer.Meta):
         model = Best
-
-    def validate(self, data):
-        user = data['user']
-        if user.best_set.filter(recipe=data['recipe']).exists():
-            raise serializers.ValidationError(ALREADY_IN_BEST)
-        return data
-
-    def to_representation(self, instance):
-        return RecipeLimitedSerializer(
-            instance.recipe,
-            context={'request': self.context.get('request')}).data
-
-'''

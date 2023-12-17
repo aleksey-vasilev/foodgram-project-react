@@ -1,7 +1,8 @@
-from django.db.models import Sum, Exists, OuterRef
+from itertools import chain
+
+from django.db.models import Sum
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import action
@@ -94,16 +95,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnly,)
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated:
-            is_favorited = user.best_set.filter(recipe__pk=OuterRef('pk'))
-            is_in_shopping_cart = user.shopcart_set.filter(
-                recipe__pk=OuterRef('pk'))
-            self.queryset = self.queryset.annotate(
-                is_in_shopping_cart=Exists(is_in_shopping_cart),
-                is_favorited=Exists(is_favorited)
-            )
-        return self.queryset
+        return Recipe.objects.annotated()
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
