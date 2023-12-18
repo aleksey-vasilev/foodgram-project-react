@@ -7,7 +7,8 @@ from .constants import (NO_INGREDIENTS_ERROR, NO_TAGS_ERROR,
                         NO_IMAGE_FIELD, SELF_FOLLOW_ERROR,
                         DUPLICATE_INGREDIENT_ERROR, DUPLICATE_TAG_ERROR,
                         DULICATE_FOLLOW_ERROR, ALREADY_IN,
-                        AMOUNT_MAX_VALUE, AMOUNT_MIN_VALUE)
+                        AMOUNT_MAX_VALUE, AMOUNT_MIN_VALUE,
+                        MAX_VALUE_ERROR, MIN_VALUE_ERROR)
 from recipes.models import (Tag, Ingredient, Recipe,
                             IngredientRecipe, User,
                             ShopCart, Best)
@@ -110,9 +111,12 @@ class IngredientModifySerializer(serializers.ModelSerializer):
 
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all())
-    amount = serializers.IntegerField(write_only=True,
-                                      max_value=AMOUNT_MAX_VALUE,
-                                      min_value=AMOUNT_MIN_VALUE)
+    amount = serializers.IntegerField(
+        write_only=True,
+        max_value=AMOUNT_MAX_VALUE,
+        min_value=AMOUNT_MIN_VALUE,
+        error_messages={'max_value': MAX_VALUE_ERROR.format(AMOUNT_MAX_VALUE),
+                        'min_value': MIN_VALUE_ERROR.format(AMOUNT_MIN_VALUE)})
 
     class Meta:
         model = IngredientRecipe
@@ -139,9 +143,12 @@ class RecipeModifySerializer(serializers.ModelSerializer):
                                               many=True)
     image = Base64ImageField()
     ingredients = IngredientModifySerializer(many=True)
-    cooking_time = serializers.IntegerField(write_only=True,
-                                            max_value=AMOUNT_MAX_VALUE,
-                                            min_value=AMOUNT_MIN_VALUE)
+    cooking_time = serializers.IntegerField(
+        write_only=True,
+        max_value=AMOUNT_MAX_VALUE,
+        min_value=AMOUNT_MIN_VALUE,
+        error_messages={'max_value': MAX_VALUE_ERROR.format(AMOUNT_MAX_VALUE),
+                        'min_value': MIN_VALUE_ERROR.format(AMOUNT_MIN_VALUE)})
 
     class Meta:
         model = Recipe

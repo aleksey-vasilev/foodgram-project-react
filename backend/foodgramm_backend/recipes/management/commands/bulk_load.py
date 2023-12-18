@@ -31,4 +31,4 @@ class Command(BaseCommand):
                     model.objects.bulk_create(obj_list, ignore_conflicts=True)
                     self.stdout.write(LOAD_DONE.format(model.__name__, number))
         except Exception as e:
-            print(CSV_LOAD_ERROR.format(path, e))
+            self.stdout.write(CSV_LOAD_ERROR.format(path, e))

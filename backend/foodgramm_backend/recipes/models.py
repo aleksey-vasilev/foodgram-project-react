@@ -38,22 +38,22 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('name',)
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=('name', 'measurement_unit'),
-                name='unique_ingredient')]
+                name='unique_ingredient'),)
 
     def __str__(self):
         return self.name
 
 
 class AnnotatededRecipeModel(models.Manager):
-    def annotated(self, user):
+    def annotated(self, queryset, user):
         is_favorited = Best.objects.all().filter(
             recipe__pk=models.OuterRef('pk'), user=user)
         is_in_shopping_cart = ShopCart.objects.all().filter(
             recipe__pk=models.OuterRef('pk'), user=user)
-        return self.annotate(
+        return queryset.annotate(
             is_in_shopping_cart=models.Exists(is_in_shopping_cart),
             is_favorited=models.Exists(is_favorited))
 
@@ -87,10 +87,10 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         ordering = ('-pub_date',)
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=('name', 'author'),
-                name='unique_recipe')]
+                name='unique_recipe'),)
 
     def __str__(self):
         return self.name
@@ -130,9 +130,9 @@ class ShopCartBestBaseModel(models.Model):
 
     class Meta:
         abstract = True
-        constraints = [models.UniqueConstraint(
+        constraints = (models.UniqueConstraint(
             fields=('user', 'recipe'),
-            name='unique_%(class)s')]
+            name='unique_%(class)s'),)
 
     def __str__(self):
         return f'{self.recipe} добавлен в {self.__class__.__name__}'

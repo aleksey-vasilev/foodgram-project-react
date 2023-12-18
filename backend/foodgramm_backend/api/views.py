@@ -95,7 +95,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated:
-            return Recipe.objects.annotated(user)
+            return Recipe.objects.annotated(self.queryset, user)
         return self.queryset
 
     def get_serializer_class(self):
