@@ -113,10 +113,10 @@ class IngredientRecipe(models.Model):
     )
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=('recipe', 'ingredient'),
-                name='unique_ingredients')]
+                name='unique_ingredients'),)
 
     def __str__(self):
         return f'{self.ingredient} {self.recipe}'
