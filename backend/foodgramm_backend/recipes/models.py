@@ -47,13 +47,13 @@ class Ingredient(models.Model):
         return self.name
 
 
-class AnnotatededRecipeModel(models.Manager):
-    def annotated(self, queryset, user):
+class RecipeQuerySet(models.QuerySet):
+    def annotated(self, user):
         is_favorited = Best.objects.all().filter(
             recipe__pk=models.OuterRef('pk'), user=user)
         is_in_shopping_cart = ShopCart.objects.all().filter(
             recipe__pk=models.OuterRef('pk'), user=user)
-        return queryset.annotate(
+        return self.annotate(
             is_in_shopping_cart=models.Exists(is_in_shopping_cart),
             is_favorited=models.Exists(is_favorited))
 
@@ -61,7 +61,7 @@ class AnnotatededRecipeModel(models.Manager):
 class Recipe(models.Model):
     """ Модель рецепта. """
 
-    objects = AnnotatededRecipeModel()
+    objects = RecipeQuerySet.as_manager()
 
     ingredients = models.ManyToManyField(Ingredient, related_name='recipes',
                                          through='IngredientRecipe')
