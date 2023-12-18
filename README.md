@@ -69,7 +69,7 @@ sudo docker compose -f docker-compose.production.yml exec backend python manage.
 sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
 sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
 ```
-### В API доступны следующие эндпоинты:
+### В API доступны следующие эндпоинты (документация доступна по адресу /api/docs/):
 
 * ```/api/users/```  Get-запрос – получение списка пользователей. POST-запрос – регистрация нового пользователя. Доступно без токена.
 
